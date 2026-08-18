@@ -1,71 +1,40 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual Environments
-venv/
-env/
-.env
+```
+# Dependencies
 .venv/
-venv.bak/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Testing
 .pytest_cache/
-cover/
+.coverage
+coverage/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# VS Code
-.vscode/
-
-# Project specific
-products.db
-test_products.db
-check_mcp_count.py
-test_output.txt
+# Logs
 *.log
 
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker
+.dockerenv
+```
