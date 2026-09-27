@@ -40,14 +40,18 @@ All errors follow `{"error": {"code": "NOT_FOUND", "message": "..."}}`. A single
 
 `ProductAgent` calls `PricingAgent` via HTTP using `httpx`. In the default setup both agents run in the same FastAPI process — `ProductAgent` is effectively calling itself on the same port. This is intentional for the demo: it keeps the setup simple while demonstrating the communication pattern.
 
-**What is already ready for external use:**
+**What is already implemented:**
 - `PricingAgent` is a plain authenticated HTTP endpoint — any external system with a valid `X-API-Key` can call it today, no changes needed.
 - `ProductAgent` reads `PRICING_AGENT_URL` from an environment variable. Point it at a remote host and it calls a remote `PricingAgent` with zero code changes.
+- Agent Cards (`/.well-known/agent.json`, `/agents/pricing/card`, `/agents/product/card`) — each agent is self-describing: name, skills, endpoint URLs, auth requirements, and async `submitEndpoint`.
+- Async task lifecycle — `POST /agents/{agent}/submit` returns a task ID immediately; background execution happens in a thread pool; `GET /agents/tasks/{id}` polls for `submitted → working → completed / failed`.
+- `examples/a2a_client.py` — standalone caller demonstrating the full flow: read Agent Card for discovery, submit a task, poll for result, display output.
 
-**What is not yet implemented (full A2A):**
-- Agent discovery — there is no agent card or capability advertisement. A calling agent must know the URL and schema upfront.
-- Capability negotiation — agents cannot describe what they can do to each other dynamically.
-- These are the pieces the Google A2A specification adds on top of plain HTTP. They are the natural next step.
+**What is not yet implemented (full A2A spec):**
+- Capability negotiation — agents cannot describe what they can do to each other dynamically at runtime.
+- Streaming — incremental progress via SSE during long-running tasks.
+- Push notifications — callback URL on submit instead of polling.
+- These are the next items in the backlog.
 
 The pricing logic lives in pure functions in `pricing.py`, keeping it testable without a running server.
 

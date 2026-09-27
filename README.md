@@ -9,10 +9,12 @@ Current focus: Python FastAPI + MCP with a simple Product CRUD domain as the wor
 ```
 fastpoc/
 ├── python/          # Python implementation using FastAPI + MCP
-│   ├── app/         # Application modules
+│   ├── app/         # Application modules (REST, MCP, agents)
 │   ├── main.py      # FastAPI entry point
 │   ├── mcp_entry.py # MCP server entry point
 │   └── README.md    # Python-specific documentation
+├── examples/        # Standalone client scripts (A2A flow demo)
+├── docs/            # Architecture and backlog
 └── README.md        # This file
 ```
 
@@ -29,8 +31,15 @@ fastpoc/
   - SQLite database with automatic initialization
   - Full CRUD operations with input validation
   - Health check endpoints (`/health`, `/ready`)
+  - API key authentication (`X-API-Key` header)
+  - Rate limiting (60/min reads, 30/min writes)
+  - Structured error responses (`{"error": {"code": "...", "message": "..."}}`)
+  - A2A agents: `PricingAgent` and `ProductAgent` with sync and async endpoints
+  - Agent Cards (`/.well-known/agent.json`) for service discovery
+  - Async task lifecycle: submit → poll → result
   - Docker support with health checks
-  - Comprehensive test suite (12 tests)
+  - GitHub Actions CI
+  - Comprehensive test suite (25 tests)
   - Environment-based configuration
   - Structured logging
 
@@ -61,6 +70,8 @@ Configure via environment variables or `.env` file:
 - `HOST` - Server host (default: 0.0.0.0)
 - `API_VERSION` - API version prefix (default: v1)
 - `DB_PATH` - SQLite database path (default: auto-detected)
+- `API_KEY` - API key for protected endpoints (default: `dev-key-changeme`)
+- `PRICING_AGENT_URL` - Base URL of the PricingAgent; defaults to the same host (same-process call)
 
 See `.env.example` for reference.
 

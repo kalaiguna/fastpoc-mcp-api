@@ -9,7 +9,7 @@ This project implements a simple Product CRUD application that exposes both a RE
 - **Versioned API**: `/api/v1/products` with Swagger UI at `/api/v1/docs`
 - **Database**: SQLite with automatic initialization and proper path management
 - **Docker Support**: Ready-to-use Dockerfile and docker-compose.yml
-- **Comprehensive Tests**: 12 tests covering all CRUD operations and edge cases
+- **Comprehensive Tests**: 25 tests covering CRUD, auth, A2A agents, task lifecycle, and agent cards
 - **Configuration**: Environment-based settings via `.env` file or variables
 
 ## Prerequisites
@@ -56,6 +56,8 @@ Available configuration options:
 - `HOST` - Server host (default: 0.0.0.0)
 - `API_VERSION` - API version prefix (default: v1)
 - `DB_PATH` - SQLite database path (default: auto-detected in app directory)
+- `API_KEY` - API key required on protected endpoints (default: `dev-key-changeme`)
+- `PRICING_AGENT_URL` - Base URL for PricingAgent HTTP calls; defaults to same host (same-process demo)
 
 ## Running the API
 
@@ -103,11 +105,15 @@ Run the comprehensive test suite:
 pytest
 ```
 
-This runs 12 tests covering:
+This runs 25 tests covering:
 - All CRUD operations (Create, Read, Update, Delete)
-- Error handling (404 scenarios)
+- Error handling (404, structured error format)
 - Input validation (negative prices, empty names, etc.)
 - Health check endpoints
+- API key authentication (accepted / rejected)
+- A2A agents: PricingAgent, ProductAgent (sync and async)
+- Agent Cards: service card, per-agent cards
+- Task lifecycle: submit, poll, 404, failed task
 
 ## API Endpoints
 
@@ -122,6 +128,14 @@ All endpoints are prefixed with `/api/v1`:
 | DELETE | `/api/v1/products/{id}` | Delete product |
 | GET | `/health` | Health check |
 | GET | `/ready` | Readiness check |
+| GET | `/.well-known/agent.json` | Service Agent Card (public) |
+| POST | `/api/v1/agents/pricing/run` | PricingAgent — sync |
+| POST | `/api/v1/agents/pricing/submit` | PricingAgent — async submit |
+| GET | `/api/v1/agents/pricing/card` | PricingAgent card |
+| POST | `/api/v1/agents/product/run` | ProductAgent — sync |
+| POST | `/api/v1/agents/product/submit` | ProductAgent — async submit |
+| GET | `/api/v1/agents/product/card` | ProductAgent card |
+| GET | `/api/v1/agents/tasks/{id}` | Poll task status |
 
 ### Example Requests
 
@@ -166,7 +180,14 @@ python/
 │   ├── api.py                # REST endpoints
 │   ├── mcp.py                # MCP tool definitions
 │   ├── service.py            # MCP server wiring
-│   └── auth.py               # API key authentication dependency
+│   ├── auth.py               # API key authentication dependency
+│   ├── limiter.py            # Shared rate limiter instance
+│   └── agents/
+│       ├── models.py         # Agent schemas, task lifecycle, agent cards
+│       ├── pricing.py        # PricingAgent logic (pure functions)
+│       ├── cards.py          # Agent Card factories
+│       ├── task_store.py     # Thread-safe in-memory task store
+│       └── router.py         # Agent HTTP endpoints (sync, async, poll, cards)
 ├── main.py                   # FastAPI entry point
 ├── mcp_entry.py              # MCP server entry point (stdio mode)
 ├── requirements.txt          # Python dependencies (pinned versions)
