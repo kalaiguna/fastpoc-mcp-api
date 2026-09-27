@@ -64,6 +64,10 @@ Configure via environment variables or `.env` file:
 
 See `.env.example` for reference.
 
+## Documentation
+
+- [Architecture](docs/architecture.md) - design decisions, module structure, and how to extend the project
+
 ## Testing
 
 ```bash
