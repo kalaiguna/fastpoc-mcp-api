@@ -5,10 +5,11 @@ FastAPI application defining REST endpoints for Product management.
 import os
 import logging
 from typing import List
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from app.models import Product, ProductCreate, ProductUpdate, ErrorResponse
 from app.db import db, ProductNotFoundError
+from app.auth import require_api_key
 
 _STATUS_TO_CODE = {
     400: "BAD_REQUEST",
@@ -72,6 +73,7 @@ def readiness_check():
 
 
 @app.get(f"/api/{API_VERSION}/products", response_model=List[Product], tags=["Products"],
+         dependencies=[Depends(require_api_key)],
          responses={401: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def list_products():
     """List all products in the database.
@@ -84,6 +86,7 @@ def list_products():
 
 
 @app.get(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
+         dependencies=[Depends(require_api_key)],
          responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def get_product(product_id: int):
     """Get a specific product by ID.
@@ -106,6 +109,7 @@ def get_product(product_id: int):
 
 
 @app.post(f"/api/{API_VERSION}/products", response_model=Product, status_code=201, tags=["Products"],
+          dependencies=[Depends(require_api_key)],
           responses={401: {"model": ErrorResponse}, 422: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def create_product(product: ProductCreate):
     """Create a new product.
@@ -121,6 +125,7 @@ def create_product(product: ProductCreate):
 
 
 @app.put(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
+         dependencies=[Depends(require_api_key)],
          responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def update_product(product_id: int, product: ProductUpdate):
     """Update an existing product.
@@ -147,6 +152,7 @@ def update_product(product_id: int, product: ProductUpdate):
 
 
 @app.delete(f"/api/{API_VERSION}/products/{{product_id}}", tags=["Products"],
+            dependencies=[Depends(require_api_key)],
             responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def delete_product(product_id: int):
     """Delete a product by ID.
