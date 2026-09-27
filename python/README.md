@@ -125,28 +125,34 @@ All endpoints are prefixed with `/api/v1`:
 
 ### Example Requests
 
+All product endpoints require an `X-API-Key` header. Set `API_KEY` in your `.env` file (defaults to `dev-key-changeme` locally).
+
 **Create a product:**
 ```bash
 curl -X POST "http://localhost:8081/api/v1/products" \
+  -H "X-API-Key: dev-key-changeme" \
   -H "Content-Type: application/json" \
   -d '{"name": "Test Product", "price": 10.5, "stock": 100}'
 ```
 
 **Get all products:**
 ```bash
-curl "http://localhost:8081/api/v1/products"
+curl "http://localhost:8081/api/v1/products" \
+  -H "X-API-Key: dev-key-changeme"
 ```
 
 **Update a product:**
 ```bash
 curl -X PUT "http://localhost:8081/api/v1/products/1" \
+  -H "X-API-Key: dev-key-changeme" \
   -H "Content-Type: application/json" \
   -d '{"name": "Updated Product", "price": 15.99, "stock": 50}'
 ```
 
 **Delete a product:**
 ```bash
-curl -X DELETE "http://localhost:8081/api/v1/products/1"
+curl -X DELETE "http://localhost:8081/api/v1/products/1" \
+  -H "X-API-Key: dev-key-changeme"
 ```
 
 ## Project Structure
@@ -154,13 +160,15 @@ curl -X DELETE "http://localhost:8081/api/v1/products/1"
 ```
 python/
 ├── app/                      # Application modules
-│   ├── __init__.py
-│   ├── models.py             # Pydantic models with validation
-│   ├── db.py                 # SQLite database and CRUD logic
-│   ├── api.py                # FastAPI routes and endpoints
-│   └── mcp_server.py         # MCP server tools
+│   ├── models.py             # Pydantic schemas (shared by API and MCP)
+│   ├── db.py                 # SQLite data access layer
+│   ├── business.py           # Domain logic (single source of truth)
+│   ├── api.py                # REST endpoints
+│   ├── mcp.py                # MCP tool definitions
+│   ├── service.py            # MCP server wiring
+│   └── auth.py               # API key authentication dependency
 ├── main.py                   # FastAPI entry point
-├── mcp_entry.py              # MCP server entry point
+├── mcp_entry.py              # MCP server entry point (stdio mode)
 ├── requirements.txt          # Python dependencies (pinned versions)
 ├── pytest.ini                # Pytest configuration
 ├── .env.example              # Environment variables template
@@ -168,6 +176,8 @@ python/
 ├── docker-compose.yml        # Docker Compose configuration
 └── README.md                 # This file
 ```
+
+See [Architecture](../docs/architecture.md) for design decisions and how to extend the project.
 
 ## Input Validation
 
