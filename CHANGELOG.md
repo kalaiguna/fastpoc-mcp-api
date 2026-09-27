@@ -7,11 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-27
+
 ### Added
 - Structured error responses — consistent `{"error": {"code": "...", "message": "..."}}` schema across all endpoints, documented in Swagger
 - API key authentication via `X-API-Key` header — configurable through `API_KEY` environment variable, defaults to `dev-key-changeme` for local development; health endpoints remain public
 - Rate limiting via `slowapi` — GET endpoints capped at 60 req/min, write endpoints (POST/PUT/DELETE) at 30 req/min; returns structured 429 error on breach
 - GitHub Actions CI pipeline (`.github/workflows/ci.yml`) — runs the full test suite on every push to `main` and `feature/**` branches, and on all PRs targeting `main`
+- `docs/architecture.md` — design decisions, module structure, and extension guide; linked from both READMEs
 
 ## [1.2.0] - 2026-09-27
 
@@ -58,7 +61,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kalaiguna/fastpoc-mcp-api/releases/tag/v1.0.0
