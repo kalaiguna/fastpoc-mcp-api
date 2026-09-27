@@ -75,6 +75,33 @@ Configure via environment variables or `.env` file:
 
 See `.env.example` for reference.
 
+## Exploring the Layers
+
+Start the server first:
+```bash
+cd python && python main.py
+```
+
+**REST API**
+- Open `http://localhost:8081/api/v1/docs` — Swagger UI with all CRUD endpoints
+- Click **Authorize**, enter `dev-key-changeme`, and all protected endpoints unlock for interactive testing
+
+**MCP**
+- Run `python mcp_entry.py` — starts the MCP server in stdio mode
+- Connect via Claude Desktop using the config in `python/README.md`
+- The five product tools (`list_products`, `get_product`, `create_product`, `update_product`, `delete_product`) appear as AI assistant tools
+
+**A2A (Agent-to-Agent)**
+- Open `http://localhost:8081/.well-known/agent.json` in a browser — the Agent Card describes what agents exist, what they can do, and where to call them
+- Run `python examples/a2a_client.py` — walks through the full flow with printed output: discover → submit → poll → result
+- Or call agents directly in Swagger: `POST /api/v1/agents/product/run` with `{"product_id": 1}`
+
+**Reading the code**
+- CRUD logic: `python/app/business.py` → `api.py`
+- MCP tools: `python/app/mcp.py`
+- A2A agents: `python/app/agents/router.py`, `pricing.py`, `cards.py`
+- See [Architecture](docs/architecture.md) for design decisions and how the layers relate
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) - design decisions, module structure, and how to extend the project
