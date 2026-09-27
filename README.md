@@ -1,6 +1,8 @@
-# FastPOC - Python FastAPI + MCP Product CRUD
+# FastPOC - FastAPI + MCP Integration POC
 
-This repository contains a Product CRUD implementation using Python FastAPI with MCP (Model Context Protocol) integration.
+A demo repository for building AI-ready APIs. The goal is to explore and showcase how a REST API (FastAPI) and an MCP Server (Model Context Protocol) can share the same codebase and business logic — and to progressively extend it with other emerging concepts and new AI integration patterns.
+
+Current focus: Python FastAPI + MCP with a simple Product CRUD domain as the working example.
 
 ## Project Structure
 
