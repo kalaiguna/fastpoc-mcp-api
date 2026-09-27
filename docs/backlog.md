@@ -10,10 +10,8 @@ Prioritised list of planned improvements and features. Items within each priorit
 ### ~~A2A: Task Lifecycle~~ ✅ Done (v1.6.0)
 ~~Replace synchronous request/response with an async task model. Client submits a task, receives a task ID, and polls `GET /tasks/{id}` for status (submitted → working → completed/failed).~~
 
-### A2A: Client Example
-Add `examples/a2a_client.py` — a standalone script that reads the Agent Card, submits a task to ProductAgent, and polls for the result. Demonstrates the full A2A flow from a caller's perspective without requiring a separate repository.
-- Effort: half a day (depends on Agent Card and Task Lifecycle being done first)
-- Unlocks: runnable end-to-end demo
+### ~~A2A: Client Example~~ ✅ Done (v1.7.0)
+~~Add `examples/a2a_client.py` — a standalone script that reads the Agent Card, submits a task to ProductAgent, and polls for the result. Demonstrates the full A2A flow from a caller's perspective without requiring a separate repository.~~
 
 ## Medium Priority
 

@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- `examples/a2a_client.py` — standalone script demonstrating the full A2A flow (discovery, submit, poll, result) against the live service; no hardcoded URLs, all resolved from the Agent Card
+- `examples/README.md` — usage instructions and expected output for the client example
+- `submitEndpoint` field added to `AgentSkill` model; populated on all agent skills in `cards.py`
+
 ## [1.6.0] - 2026-09-27
 
 ### Added
