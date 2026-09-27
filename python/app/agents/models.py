@@ -67,6 +67,7 @@ class AgentSkill(BaseModel):
     name: str
     description: str
     endpoint: str
+    submitEndpoint: Optional[str] = None  # async submit path; poll via /agents/tasks/{id}
     inputModes: List[str] = ["application/json"]
     outputModes: List[str] = ["application/json"]
     examples: Optional[List[Any]] = None
