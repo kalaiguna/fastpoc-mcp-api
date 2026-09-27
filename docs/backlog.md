@@ -7,10 +7,8 @@ Prioritised list of planned improvements and features. Items within each priorit
 ### ~~A2A: Agent Card~~ ✅ Done (v1.5.0)
 ~~Serve `/.well-known/agent.json` for each agent — describes the agent's name, capabilities, endpoint URL, and auth requirements. This is the discovery layer that makes agents self-describing to any caller.~~
 
-### A2A: Task Lifecycle
-Replace synchronous request/response with an async task model. Client submits a task, receives a task ID, and polls `GET /tasks/{id}` for status (submitted → working → completed/failed). Requires a task store (SQLite is sufficient).
-- Effort: 2-3 days
-- Unlocks: agents can handle long-running operations; callers are decoupled from execution time
+### ~~A2A: Task Lifecycle~~ ✅ Done (v1.6.0)
+~~Replace synchronous request/response with an async task model. Client submits a task, receives a task ID, and polls `GET /tasks/{id}` for status (submitted → working → completed/failed).~~
 
 ### A2A: Client Example
 Add `examples/a2a_client.py` — a standalone script that reads the Agent Card, submits a task to ProductAgent, and polls for the result. Demonstrates the full A2A flow from a caller's perspective without requiring a separate repository.
