@@ -10,6 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 - Structured error responses — consistent `{"error": {"code": "...", "message": "..."}}` schema across all endpoints, documented in Swagger
 - API key authentication via `X-API-Key` header — configurable through `API_KEY` environment variable, defaults to `dev-key-changeme` for local development; health endpoints remain public
+- Rate limiting via `slowapi` — GET endpoints capped at 60 req/min, write endpoints (POST/PUT/DELETE) at 30 req/min; returns structured 429 error on breach
 
 ## [1.2.0] - 2026-09-27
 

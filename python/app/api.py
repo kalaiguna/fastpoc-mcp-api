@@ -7,9 +7,14 @@ import logging
 from typing import List
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from app.models import Product, ProductCreate, ProductUpdate, ErrorResponse
 from app.db import db, ProductNotFoundError
 from app.auth import require_api_key
+
+limiter = Limiter(key_func=get_remote_address)
 
 _STATUS_TO_CODE = {
     400: "BAD_REQUEST",
@@ -43,6 +48,7 @@ app = FastAPI(
         {"name": "Health", "description": "Health check endpoints"}
     ]
 )
+app.state.limiter = limiter
 
 
 @app.exception_handler(HTTPException)
@@ -51,6 +57,14 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": {"code": code, "message": str(exc.detail)}},
+    )
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"error": {"code": "TOO_MANY_REQUESTS", "message": "Rate limit exceeded. Please slow down."}},
     )
 
 
@@ -75,12 +89,9 @@ def readiness_check():
 @app.get(f"/api/{API_VERSION}/products", response_model=List[Product], tags=["Products"],
          dependencies=[Depends(require_api_key)],
          responses={401: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
-def list_products():
-    """List all products in the database.
-    
-    Returns:
-        List of all products with their details.
-    """
+@limiter.limit("60/minute")
+def list_products(request: Request):
+    """List all products in the database."""
     logger.info("Fetching all products")
     return db.get_all()
 
@@ -88,18 +99,9 @@ def list_products():
 @app.get(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
          dependencies=[Depends(require_api_key)],
          responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
-def get_product(product_id: int):
-    """Get a specific product by ID.
-    
-    Args:
-        product_id: The unique identifier of the product.
-        
-    Returns:
-        The requested product details.
-        
-    Raises:
-        HTTPException: 404 if product not found.
-    """
+@limiter.limit("60/minute")
+def get_product(request: Request, product_id: int):
+    """Get a specific product by ID."""
     try:
         logger.info(f"Fetching product with id: {product_id}")
         return db.get_by_id(product_id)
@@ -111,15 +113,9 @@ def get_product(product_id: int):
 @app.post(f"/api/{API_VERSION}/products", response_model=Product, status_code=201, tags=["Products"],
           dependencies=[Depends(require_api_key)],
           responses={401: {"model": ErrorResponse}, 422: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
-def create_product(product: ProductCreate):
-    """Create a new product.
-    
-    Args:
-        product: Product data including name, description, price, and stock.
-        
-    Returns:
-        The created product with assigned ID.
-    """
+@limiter.limit("30/minute")
+def create_product(request: Request, product: ProductCreate):
+    """Create a new product."""
     logger.info(f"Creating new product: {product.name}")
     return db.create(product)
 
@@ -127,19 +123,9 @@ def create_product(product: ProductCreate):
 @app.put(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
          dependencies=[Depends(require_api_key)],
          responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
-def update_product(product_id: int, product: ProductUpdate):
-    """Update an existing product.
-    
-    Args:
-        product_id: The unique identifier of the product to update.
-        product: Fields to update (name, description, price, stock).
-        
-    Returns:
-        The updated product details.
-        
-    Raises:
-        HTTPException: 404 if product not found.
-    """
+@limiter.limit("30/minute")
+def update_product(request: Request, product_id: int, product: ProductUpdate):
+    """Update an existing product."""
     try:
         logger.info(f"Updating product with id: {product_id}")
         return db.update(product_id, product)
@@ -154,18 +140,9 @@ def update_product(product_id: int, product: ProductUpdate):
 @app.delete(f"/api/{API_VERSION}/products/{{product_id}}", tags=["Products"],
             dependencies=[Depends(require_api_key)],
             responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
-def delete_product(product_id: int):
-    """Delete a product by ID.
-    
-    Args:
-        product_id: The unique identifier of the product to delete.
-        
-    Returns:
-        Success message.
-        
-    Raises:
-        HTTPException: 404 if product not found.
-    """
+@limiter.limit("30/minute")
+def delete_product(request: Request, product_id: int):
+    """Delete a product by ID."""
     try:
         logger.info(f"Deleting product with id: {product_id}")
         db.delete(product_id)
