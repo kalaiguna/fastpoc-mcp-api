@@ -5,9 +5,21 @@ FastAPI application defining REST endpoints for Product management.
 import os
 import logging
 from typing import List
-from fastapi import FastAPI, HTTPException
-from app.models import Product, ProductCreate, ProductUpdate
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from app.models import Product, ProductCreate, ProductUpdate, ErrorResponse
 from app.db import db, ProductNotFoundError
+
+_STATUS_TO_CODE = {
+    400: "BAD_REQUEST",
+    401: "UNAUTHORIZED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    422: "VALIDATION_ERROR",
+    429: "TOO_MANY_REQUESTS",
+    500: "INTERNAL_SERVER_ERROR",
+    503: "SERVICE_UNAVAILABLE",
+}
 
 # Configure logging
 logging.basicConfig(
@@ -32,6 +44,15 @@ app = FastAPI(
 )
 
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    code = _STATUS_TO_CODE.get(exc.status_code, "ERROR")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": code, "message": str(exc.detail)}},
+    )
+
+
 @app.get("/health", tags=["Health"], summary="Health Check")
 def health_check():
     """Health check endpoint for container orchestration and monitoring."""
@@ -50,7 +71,8 @@ def readiness_check():
         raise HTTPException(status_code=503, detail="Service not ready")
 
 
-@app.get(f"/api/{API_VERSION}/products", response_model=List[Product], tags=["Products"])
+@app.get(f"/api/{API_VERSION}/products", response_model=List[Product], tags=["Products"],
+         responses={401: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def list_products():
     """List all products in the database.
     
@@ -61,7 +83,8 @@ def list_products():
     return db.get_all()
 
 
-@app.get(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"])
+@app.get(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
+         responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def get_product(product_id: int):
     """Get a specific product by ID.
     
@@ -82,7 +105,8 @@ def get_product(product_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@app.post(f"/api/{API_VERSION}/products", response_model=Product, status_code=201, tags=["Products"])
+@app.post(f"/api/{API_VERSION}/products", response_model=Product, status_code=201, tags=["Products"],
+          responses={401: {"model": ErrorResponse}, 422: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def create_product(product: ProductCreate):
     """Create a new product.
     
@@ -96,7 +120,8 @@ def create_product(product: ProductCreate):
     return db.create(product)
 
 
-@app.put(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"])
+@app.put(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
+         responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def update_product(product_id: int, product: ProductUpdate):
     """Update an existing product.
     
@@ -121,7 +146,8 @@ def update_product(product_id: int, product: ProductUpdate):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.delete(f"/api/{API_VERSION}/products/{{product_id}}", tags=["Products"])
+@app.delete(f"/api/{API_VERSION}/products/{{product_id}}", tags=["Products"],
+            responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
 def delete_product(product_id: int):
     """Delete a product by ID.
     

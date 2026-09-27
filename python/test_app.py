@@ -87,7 +87,9 @@ def test_get_product_not_found(test_client):
     """Test 404 response for non-existent product."""
     response = test_client.get("/api/v1/products/99999")
     assert response.status_code == 404
-    assert "detail" in response.json()
+    body = response.json()
+    assert "error" in body
+    assert body["error"]["code"] == "NOT_FOUND"
 
 
 def test_create_product(test_client):
@@ -189,8 +191,8 @@ def test_delete_product_not_found(test_client):
 
 
 def test_mcp_logic():
-    """Test MCP server module imports correctly."""
-    from app.mcp_server import list_products, get_product, create_product
-    assert callable(list_products)
-    assert callable(get_product)
-    assert callable(create_product)
+    """Test MCP module imports correctly after refactor."""
+    from app.business import list_all_products, get_product_by_id, create_product_logic
+    assert callable(list_all_products)
+    assert callable(get_product_by_id)
+    assert callable(create_product_logic)
