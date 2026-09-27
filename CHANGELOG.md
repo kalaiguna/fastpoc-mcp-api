@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-27
+
 ### Added
 - Agent Cards — each agent is now self-describing:
   - `GET /.well-known/agent.json` — service-level card listing all agents and their skills; public, no auth required
@@ -79,7 +81,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.1.0...v1.2.0
