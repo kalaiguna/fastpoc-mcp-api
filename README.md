@@ -1,6 +1,6 @@
-# FastPOC - Multi-Language CRUD Prototype
+# FastPOC - Python FastAPI + MCP Product CRUD
 
-This repository contains CRUD (Create, Read, Update, Delete) implementations for managing Products, organized by programming language.
+This repository contains a Product CRUD implementation using Python FastAPI with MCP (Model Context Protocol) integration.
 
 ## Project Structure
 
@@ -14,7 +14,7 @@ fastpoc/
 └── README.md        # This file
 ```
 
-## Available Implementations
+## Implementation
 
 ### Python (FastAPI + MCP) ✅ Production-Ready
 - **Location**: `python/`
@@ -64,17 +64,7 @@ See `.env.example` for reference.
 
 ## Testing
 
-Run the test suite:
 ```bash
 cd python
 pytest
 ```
-
-## Future Implementations
-
-This structure is designed to accommodate implementations in other languages:
-- C# (planned)
-- Java (planned)
-- Node.js (planned)
-
-Each implementation will have its own subdirectory with language-specific documentation.
