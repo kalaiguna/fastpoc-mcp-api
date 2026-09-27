@@ -7,12 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-27
+
 ### Added
 - Agent-to-Agent (A2A) demo — two agents communicating via HTTP:
   - `PricingAgent` (`POST /api/v1/agents/pricing/run`) — rule-based pricing analysis for a product
   - `ProductAgent` (`POST /api/v1/agents/product/run`) — fetches product data, delegates to PricingAgent via HTTP, returns combined analysis
 - `app/agents/` package: `models.py`, `pricing.py`, `router.py`
 - `app/limiter.py` — shared rate limiter instance used across API and agent routes
+- `docs/backlog.md` — prioritised feature backlog (Agent Card, Task Lifecycle, Streaming, Push Notifications, Auth upgrade, PostgreSQL)
 
 ## [1.3.0] - 2026-09-27
 
@@ -68,7 +71,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.0.0...v1.1.0
