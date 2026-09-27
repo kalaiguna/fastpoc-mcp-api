@@ -284,3 +284,37 @@ def test_pricing_logic_high_stock():
     result = analyze_pricing(price=100.0, stock=90)
     assert result.suggested_max < 100.0
     assert result.discount_eligible is True
+
+
+# --- Agent Card tests ---
+
+def test_service_agent_card(test_client):
+    """/.well-known/agent.json is public and returns a valid service card."""
+    response = test_client.get("/.well-known/agent.json")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "FastPOC Agent Service"
+    assert "skills" in data
+    assert len(data["skills"]) == 2
+    assert data["authentication"]["schemes"] == ["apiKey"]
+    assert data["capabilities"]["streaming"] is False
+
+
+def test_pricing_agent_card(test_client):
+    """PricingAgent card returns correct metadata."""
+    response = test_client.get("/api/v1/agents/pricing/card")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "PricingAgent"
+    assert len(data["skills"]) == 1
+    assert data["skills"][0]["id"] == "pricing-analysis"
+
+
+def test_product_agent_card(test_client):
+    """ProductAgent card returns correct metadata."""
+    response = test_client.get("/api/v1/agents/product/card")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "ProductAgent"
+    assert len(data["skills"]) == 1
+    assert data["skills"][0]["id"] == "product-analysis"

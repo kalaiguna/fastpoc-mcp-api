@@ -13,6 +13,7 @@ from app.db import db, ProductNotFoundError
 from app.auth import require_api_key
 from app.limiter import limiter
 from app.agents.router import router as agents_router
+from app.agents.cards import service_card
 
 _STATUS_TO_CODE = {
     400: "BAD_REQUEST",
@@ -65,6 +66,13 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         status_code=429,
         content={"error": {"code": "TOO_MANY_REQUESTS", "message": "Rate limit exceeded. Please slow down."}},
     )
+
+
+@app.get("/.well-known/agent.json", tags=["Agent Cards"], summary="Service Agent Card",
+         include_in_schema=True)
+def get_service_agent_card():
+    """Service-level Agent Card — lists all agents and their capabilities. No auth required."""
+    return service_card()
 
 
 @app.get("/health", tags=["Health"], summary="Health Check")
