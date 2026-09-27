@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Agent Cards — each agent is now self-describing:
+  - `GET /.well-known/agent.json` — service-level card listing all agents and their skills; public, no auth required
+  - `GET /api/v1/agents/pricing/card` — PricingAgent card
+  - `GET /api/v1/agents/product/card` — ProductAgent card
+- `app/agents/cards.py` — card factory functions; URLs are derived from env vars so cards stay accurate across environments
+- `AgentCard`, `AgentSkill`, `AgentAuthentication`, `AgentCapabilities` models added to `agents/models.py`
+
 ## [1.4.0] - 2026-09-27
 
 ### Added

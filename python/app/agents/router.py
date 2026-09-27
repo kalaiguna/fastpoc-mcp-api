@@ -12,8 +12,9 @@ Change PRICING_AGENT_URL to point to a remote service and the pattern holds.
 import os
 import httpx
 from fastapi import APIRouter, HTTPException, Depends, Request
-from app.agents.models import AgentRequest, PricingResult, ProductAnalysis
+from app.agents.models import AgentRequest, PricingResult, ProductAnalysis, AgentCard
 from app.agents.pricing import analyze_pricing
+from app.agents.cards import pricing_agent_card, product_agent_card
 from app.auth import require_api_key
 from app.db import db, ProductNotFoundError
 from app.limiter import limiter
@@ -70,3 +71,15 @@ def run_product_agent(request: Request, body: AgentRequest):
         stock=product.stock,
         pricing=pricing,
     )
+
+
+@router.get("/pricing/card", response_model=AgentCard, tags=["Agent Cards"])
+def get_pricing_agent_card():
+    """Agent Card for PricingAgent — describes capabilities, endpoint, and auth."""
+    return pricing_agent_card()
+
+
+@router.get("/product/card", response_model=AgentCard, tags=["Agent Cards"])
+def get_product_agent_card():
+    """Agent Card for ProductAgent — describes capabilities, endpoint, and auth."""
+    return product_agent_card()
