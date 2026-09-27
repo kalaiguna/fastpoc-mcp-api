@@ -5,9 +5,27 @@ FastAPI application defining REST endpoints for Product management.
 import os
 import logging
 from typing import List
-from fastapi import FastAPI, HTTPException
-from app.models import Product, ProductCreate, ProductUpdate
+from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from app.models import Product, ProductCreate, ProductUpdate, ErrorResponse
 from app.db import db, ProductNotFoundError
+from app.auth import require_api_key
+
+limiter = Limiter(key_func=get_remote_address)
+
+_STATUS_TO_CODE = {
+    400: "BAD_REQUEST",
+    401: "UNAUTHORIZED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    422: "VALIDATION_ERROR",
+    429: "TOO_MANY_REQUESTS",
+    500: "INTERNAL_SERVER_ERROR",
+    503: "SERVICE_UNAVAILABLE",
+}
 
 # Configure logging
 logging.basicConfig(
@@ -30,6 +48,24 @@ app = FastAPI(
         {"name": "Health", "description": "Health check endpoints"}
     ]
 )
+app.state.limiter = limiter
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    code = _STATUS_TO_CODE.get(exc.status_code, "ERROR")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": code, "message": str(exc.detail)}},
+    )
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"error": {"code": "TOO_MANY_REQUESTS", "message": "Rate limit exceeded. Please slow down."}},
+    )
 
 
 @app.get("/health", tags=["Health"], summary="Health Check")
@@ -50,30 +86,22 @@ def readiness_check():
         raise HTTPException(status_code=503, detail="Service not ready")
 
 
-@app.get(f"/api/{API_VERSION}/products", response_model=List[Product], tags=["Products"])
-def list_products():
-    """List all products in the database.
-    
-    Returns:
-        List of all products with their details.
-    """
+@app.get(f"/api/{API_VERSION}/products", response_model=List[Product], tags=["Products"],
+         dependencies=[Depends(require_api_key)],
+         responses={401: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
+@limiter.limit("60/minute")
+def list_products(request: Request):
+    """List all products in the database."""
     logger.info("Fetching all products")
     return db.get_all()
 
 
-@app.get(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"])
-def get_product(product_id: int):
-    """Get a specific product by ID.
-    
-    Args:
-        product_id: The unique identifier of the product.
-        
-    Returns:
-        The requested product details.
-        
-    Raises:
-        HTTPException: 404 if product not found.
-    """
+@app.get(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
+         dependencies=[Depends(require_api_key)],
+         responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
+@limiter.limit("60/minute")
+def get_product(request: Request, product_id: int):
+    """Get a specific product by ID."""
     try:
         logger.info(f"Fetching product with id: {product_id}")
         return db.get_by_id(product_id)
@@ -82,34 +110,22 @@ def get_product(product_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@app.post(f"/api/{API_VERSION}/products", response_model=Product, status_code=201, tags=["Products"])
-def create_product(product: ProductCreate):
-    """Create a new product.
-    
-    Args:
-        product: Product data including name, description, price, and stock.
-        
-    Returns:
-        The created product with assigned ID.
-    """
+@app.post(f"/api/{API_VERSION}/products", response_model=Product, status_code=201, tags=["Products"],
+          dependencies=[Depends(require_api_key)],
+          responses={401: {"model": ErrorResponse}, 422: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
+@limiter.limit("30/minute")
+def create_product(request: Request, product: ProductCreate):
+    """Create a new product."""
     logger.info(f"Creating new product: {product.name}")
     return db.create(product)
 
 
-@app.put(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"])
-def update_product(product_id: int, product: ProductUpdate):
-    """Update an existing product.
-    
-    Args:
-        product_id: The unique identifier of the product to update.
-        product: Fields to update (name, description, price, stock).
-        
-    Returns:
-        The updated product details.
-        
-    Raises:
-        HTTPException: 404 if product not found.
-    """
+@app.put(f"/api/{API_VERSION}/products/{{product_id}}", response_model=Product, tags=["Products"],
+         dependencies=[Depends(require_api_key)],
+         responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
+@limiter.limit("30/minute")
+def update_product(request: Request, product_id: int, product: ProductUpdate):
+    """Update an existing product."""
     try:
         logger.info(f"Updating product with id: {product_id}")
         return db.update(product_id, product)
@@ -121,19 +137,12 @@ def update_product(product_id: int, product: ProductUpdate):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.delete(f"/api/{API_VERSION}/products/{{product_id}}", tags=["Products"])
-def delete_product(product_id: int):
-    """Delete a product by ID.
-    
-    Args:
-        product_id: The unique identifier of the product to delete.
-        
-    Returns:
-        Success message.
-        
-    Raises:
-        HTTPException: 404 if product not found.
-    """
+@app.delete(f"/api/{API_VERSION}/products/{{product_id}}", tags=["Products"],
+            dependencies=[Depends(require_api_key)],
+            responses={401: {"model": ErrorResponse}, 404: {"model": ErrorResponse}, 429: {"model": ErrorResponse}})
+@limiter.limit("30/minute")
+def delete_product(request: Request, product_id: int):
+    """Delete a product by ID."""
     try:
         logger.info(f"Deleting product with id: {product_id}")
         db.delete(product_id)
