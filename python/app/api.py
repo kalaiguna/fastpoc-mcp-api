@@ -7,14 +7,12 @@ import logging
 from typing import List
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.models import Product, ProductCreate, ProductUpdate, ErrorResponse
 from app.db import db, ProductNotFoundError
 from app.auth import require_api_key
-
-limiter = Limiter(key_func=get_remote_address)
+from app.limiter import limiter
+from app.agents.router import router as agents_router
 
 _STATUS_TO_CODE = {
     400: "BAD_REQUEST",
@@ -49,6 +47,7 @@ app = FastAPI(
     ]
 )
 app.state.limiter = limiter
+app.include_router(agents_router, prefix=f"/api/{API_VERSION}")
 
 
 @app.exception_handler(HTTPException)

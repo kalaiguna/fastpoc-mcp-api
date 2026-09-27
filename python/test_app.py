@@ -4,11 +4,13 @@ Uses a temporary SQLite database to ensure tests runs are isolated and determini
 """
 import pytest
 import os
+from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from app.api import app
 from app.db import SQLiteDB, ProductNotFoundError
 import app.db as app_db_module
 import app.api as app_api_module
+import app.agents.router as agents_router_module
 
 
 # Fixture to setup a temporary database for testing
@@ -31,12 +33,14 @@ def setup_test_db():
     # Patch the global db instances
     app_db_module.db = test_db
     app_api_module.db = test_db
-    
+    agents_router_module.db = test_db
+
     yield test_db
-    
+
     # Restore original references
     app_db_module.db = original_db_app
     app_api_module.db = original_db_api
+    agents_router_module.db = test_db
     
     # Cleanup test database file
     if os.path.exists(test_db_path):
@@ -210,3 +214,73 @@ def test_mcp_logic():
     assert callable(list_all_products)
     assert callable(get_product_by_id)
     assert callable(create_product_logic)
+
+
+# --- A2A Agent tests ---
+
+def test_pricing_agent(test_client):
+    """PricingAgent returns a pricing recommendation for a valid product."""
+    response = test_client.post(
+        "/api/v1/agents/pricing/run",
+        json={"product_id": 1},
+        headers=API_KEY_HEADER,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "suggested_min" in data
+    assert "suggested_max" in data
+    assert "discount_eligible" in data
+    assert "reasoning" in data
+
+
+def test_pricing_agent_not_found(test_client):
+    """PricingAgent returns 404 for a non-existent product."""
+    response = test_client.post(
+        "/api/v1/agents/pricing/run",
+        json={"product_id": 99999},
+        headers=API_KEY_HEADER,
+    )
+    assert response.status_code == 404
+
+
+def test_product_agent(test_client):
+    """ProductAgent returns combined analysis by calling PricingAgent via HTTP (mocked)."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "suggested_min": 9.5,
+        "suggested_max": 10.5,
+        "discount_eligible": False,
+        "reasoning": "Stock levels are healthy — hold current price.",
+    }
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.agents.router.httpx.post", return_value=mock_response):
+        response = test_client.post(
+            "/api/v1/agents/product/run",
+            json={"product_id": 1},
+            headers=API_KEY_HEADER,
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["product_id"] == 1
+    assert "name" in data
+    assert "current_price" in data
+    assert "pricing" in data
+    assert data["pricing"]["discount_eligible"] is False
+
+
+def test_pricing_logic_low_stock():
+    """PricingAgent recommends premium price when stock is low."""
+    from app.agents.pricing import analyze_pricing
+    result = analyze_pricing(price=100.0, stock=10)
+    assert result.suggested_min > 100.0
+    assert result.discount_eligible is False
+
+
+def test_pricing_logic_high_stock():
+    """PricingAgent recommends discount when stock is high."""
+    from app.agents.pricing import analyze_pricing
+    result = analyze_pricing(price=100.0, stock=90)
+    assert result.suggested_max < 100.0
+    assert result.discount_eligible is True

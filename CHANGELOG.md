@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Agent-to-Agent (A2A) demo — two agents communicating via HTTP:
+  - `PricingAgent` (`POST /api/v1/agents/pricing/run`) — rule-based pricing analysis for a product
+  - `ProductAgent` (`POST /api/v1/agents/product/run`) — fetches product data, delegates to PricingAgent via HTTP, returns combined analysis
+- `app/agents/` package: `models.py`, `pricing.py`, `router.py`
+- `app/limiter.py` — shared rate limiter instance used across API and agent routes
+
 ## [1.3.0] - 2026-09-27
 
 ### Added

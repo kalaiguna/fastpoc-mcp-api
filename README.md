@@ -67,6 +67,7 @@ See `.env.example` for reference.
 ## Documentation
 
 - [Architecture](docs/architecture.md) - design decisions, module structure, and how to extend the project
+- [Backlog](docs/backlog.md) - planned features and improvements, prioritised
 
 ## Testing
 
