@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Async task lifecycle for A2A agents — submit a task, get a task ID, poll for result:
+  - `POST /api/v1/agents/pricing/submit` — submit pricing analysis task
+  - `POST /api/v1/agents/product/submit` — submit product analysis task
+  - `GET /api/v1/agents/tasks/{task_id}` — poll task status (`submitted` → `working` → `completed` / `failed`)
+- `app/agents/task_store.py` — thread-safe in-memory task store (production note: swap for Redis or SQLite)
+- `TaskStatus`, `Task`, `TaskSubmission` models added to `agents/models.py`
+
 ## [1.5.0] - 2026-09-27
 
 ### Added

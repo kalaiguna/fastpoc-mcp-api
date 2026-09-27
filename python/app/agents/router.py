@@ -1,20 +1,29 @@
 """
 Agent-to-Agent (A2A) demo routes.
 
-PricingAgent  — analyzes a product and returns pricing recommendations.
-ProductAgent  — fetches product data, then delegates to PricingAgent via HTTP
-                to get pricing, and returns a combined analysis.
+Sync (request/response):
+  PricingAgent  POST /agents/pricing/run
+  ProductAgent  POST /agents/product/run  (calls PricingAgent via HTTP)
 
-The HTTP call from ProductAgent -> PricingAgent is the A2A pattern:
-each agent is an independent endpoint that can be hosted on a separate service.
-Change PRICING_AGENT_URL to point to a remote service and the pattern holds.
+Async (task lifecycle):
+  Submit        POST /agents/pricing/submit
+                POST /agents/product/submit
+  Poll          GET  /agents/tasks/{task_id}
+
+Change PRICING_AGENT_URL to a remote host and the agents become independent services.
 """
 import os
+import uuid
 import httpx
-from fastapi import APIRouter, HTTPException, Depends, Request
-from app.agents.models import AgentRequest, PricingResult, ProductAnalysis, AgentCard
+from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
+from app.agents.models import (
+    AgentRequest, PricingResult, ProductAnalysis, AgentCard,
+    Task, TaskStatus, TaskSubmission,
+)
 from app.agents.pricing import analyze_pricing
 from app.agents.cards import pricing_agent_card, product_agent_card
+from app.agents.task_store import task_store
 from app.auth import require_api_key
 from app.db import db, ProductNotFoundError
 from app.limiter import limiter
@@ -83,3 +92,106 @@ def get_pricing_agent_card():
 def get_product_agent_card():
     """Agent Card for ProductAgent — describes capabilities, endpoint, and auth."""
     return product_agent_card()
+
+
+# --- Async task lifecycle ---
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _run_pricing_task(task_id: str, product_id: int) -> None:
+    task = task_store.get(task_id)
+    task.status = TaskStatus.working
+    task.updated_at = _now()
+    task_store.save(task)
+    try:
+        product = db.get_by_id(product_id)
+        result = analyze_pricing(product.price, product.stock)
+        task.result = result.model_dump()
+        task.status = TaskStatus.completed
+    except Exception as e:
+        task.error = str(e)
+        task.status = TaskStatus.failed
+    task.updated_at = _now()
+    task_store.save(task)
+
+
+def _run_product_task(task_id: str, product_id: int) -> None:
+    task = task_store.get(task_id)
+    task.status = TaskStatus.working
+    task.updated_at = _now()
+    task_store.save(task)
+    try:
+        product = db.get_by_id(product_id)
+        api_key = os.getenv("API_KEY", "dev-key-changeme")
+        response = httpx.post(
+            f"{PRICING_AGENT_URL}/api/{API_VERSION}/agents/pricing/run",
+            json={"product_id": product_id},
+            headers={"X-API-Key": api_key},
+            timeout=5.0,
+        )
+        response.raise_for_status()
+        pricing = PricingResult(**response.json())
+        analysis = ProductAnalysis(
+            product_id=product.id,
+            name=product.name,
+            current_price=product.price,
+            stock=product.stock,
+            pricing=pricing,
+        )
+        task.result = analysis.model_dump()
+        task.status = TaskStatus.completed
+    except Exception as e:
+        task.error = str(e)
+        task.status = TaskStatus.failed
+    task.updated_at = _now()
+    task_store.save(task)
+
+
+@router.post("/pricing/submit", response_model=TaskSubmission, tags=["Agents"],
+             dependencies=[Depends(require_api_key)])
+@limiter.limit("30/minute")
+def submit_pricing_task(request: Request, body: AgentRequest, background_tasks: BackgroundTasks):
+    """Submit a pricing analysis task. Returns a task ID to poll for the result."""
+    now = _now()
+    task = Task(
+        id=str(uuid.uuid4()),
+        agent="pricing",
+        status=TaskStatus.submitted,
+        input=body.model_dump(),
+        created_at=now,
+        updated_at=now,
+    )
+    task_store.save(task)
+    background_tasks.add_task(_run_pricing_task, task.id, body.product_id)
+    return TaskSubmission(task_id=task.id, status=task.status, message="Task submitted.")
+
+
+@router.post("/product/submit", response_model=TaskSubmission, tags=["Agents"],
+             dependencies=[Depends(require_api_key)])
+@limiter.limit("30/minute")
+def submit_product_task(request: Request, body: AgentRequest, background_tasks: BackgroundTasks):
+    """Submit a product analysis task. Returns a task ID to poll for the result."""
+    now = _now()
+    task = Task(
+        id=str(uuid.uuid4()),
+        agent="product",
+        status=TaskStatus.submitted,
+        input=body.model_dump(),
+        created_at=now,
+        updated_at=now,
+    )
+    task_store.save(task)
+    background_tasks.add_task(_run_product_task, task.id, body.product_id)
+    return TaskSubmission(task_id=task.id, status=task.status, message="Task submitted.")
+
+
+@router.get("/tasks/{task_id}", response_model=Task, tags=["Agents"],
+            dependencies=[Depends(require_api_key)])
+def get_task(task_id: str):
+    """Poll task status. Result is populated when status is 'completed'."""
+    task = task_store.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    return task

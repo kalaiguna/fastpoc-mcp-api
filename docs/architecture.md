@@ -15,9 +15,11 @@ app/
 ├── auth.py             # API key dependency
 ├── limiter.py          # Shared rate limiter instance
 └── agents/
-    ├── models.py       # Agent request/response schemas
+    ├── models.py       # Agent schemas: requests, results, task lifecycle, agent cards
     ├── pricing.py      # PricingAgent logic (pure functions)
-    └── router.py       # Agent HTTP endpoints (A2A demo)
+    ├── cards.py        # Agent Card factories (A2A discovery)
+    ├── task_store.py   # Thread-safe in-memory task store
+    └── router.py       # Agent HTTP endpoints: sync /run, async /submit, poll /tasks
 ```
 
 ## Key Design Decisions

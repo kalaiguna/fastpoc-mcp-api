@@ -318,3 +318,62 @@ def test_product_agent_card(test_client):
     assert data["name"] == "ProductAgent"
     assert len(data["skills"]) == 1
     assert data["skills"][0]["id"] == "product-analysis"
+
+
+# --- Task lifecycle tests ---
+
+def test_submit_pricing_task(test_client):
+    """Submitting a pricing task returns a task ID with submitted status."""
+    response = test_client.post(
+        "/api/v1/agents/pricing/submit",
+        json={"product_id": 1},
+        headers=API_KEY_HEADER,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "task_id" in data
+    assert data["status"] == "submitted"
+
+
+def test_poll_pricing_task_completes(test_client):
+    """Polling a submitted pricing task eventually returns completed with a result."""
+    submit = test_client.post(
+        "/api/v1/agents/pricing/submit",
+        json={"product_id": 1},
+        headers=API_KEY_HEADER,
+    )
+    task_id = submit.json()["task_id"]
+
+    # TestClient runs background tasks synchronously before returning,
+    # so the task should already be completed by the time we poll.
+    poll = test_client.get(f"/api/v1/agents/tasks/{task_id}", headers=API_KEY_HEADER)
+    assert poll.status_code == 200
+    data = poll.json()
+    assert data["status"] == "completed"
+    assert data["result"] is not None
+    assert "suggested_min" in data["result"]
+
+
+def test_poll_task_not_found(test_client):
+    """Polling a non-existent task returns 404."""
+    response = test_client.get(
+        "/api/v1/agents/tasks/00000000-0000-0000-0000-000000000000",
+        headers=API_KEY_HEADER,
+    )
+    assert response.status_code == 404
+
+
+def test_submit_pricing_task_invalid_product(test_client):
+    """Submitting a task for a non-existent product results in a failed task."""
+    submit = test_client.post(
+        "/api/v1/agents/pricing/submit",
+        json={"product_id": 99999},
+        headers=API_KEY_HEADER,
+    )
+    task_id = submit.json()["task_id"]
+
+    poll = test_client.get(f"/api/v1/agents/tasks/{task_id}", headers=API_KEY_HEADER)
+    assert poll.status_code == 200
+    data = poll.json()
+    assert data["status"] == "failed"
+    assert data["error"] is not None

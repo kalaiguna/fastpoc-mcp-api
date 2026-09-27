@@ -1,4 +1,6 @@
-from typing import List, Optional, Any
+from enum import Enum
+from datetime import datetime
+from typing import List, Optional, Any, Dict
 from pydantic import BaseModel
 
 
@@ -19,6 +21,32 @@ class ProductAnalysis(BaseModel):
     current_price: float
     stock: int
     pricing: PricingResult
+
+
+# --- Task lifecycle models (A2A async pattern) ---
+
+class TaskStatus(str, Enum):
+    submitted = "submitted"
+    working = "working"
+    completed = "completed"
+    failed = "failed"
+
+
+class TaskSubmission(BaseModel):
+    task_id: str
+    status: TaskStatus
+    message: str
+
+
+class Task(BaseModel):
+    id: str
+    agent: str
+    status: TaskStatus
+    input: Dict[str, Any]
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
 
 # --- Agent Card models (A2A spec) ---
