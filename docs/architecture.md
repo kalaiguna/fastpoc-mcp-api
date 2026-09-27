@@ -2,17 +2,22 @@
 
 ## Overview
 
-This project exposes a single Product database through two interfaces: a REST API (FastAPI) and an MCP Server (Model Context Protocol). Both share the same business logic — no duplication.
+This project exposes a single Product database through two interfaces: a REST API (FastAPI) and an MCP Server (Model Context Protocol). Both share the same business logic — no duplication. An Agent layer demonstrates the A2A (Agent-to-Agent) communication pattern on top of the REST API.
 
 ```
 app/
-├── models.py       # Pydantic schemas (shared by API and MCP)
-├── db.py           # SQLite data access layer
-├── business.py     # Domain logic (the single source of truth)
-├── api.py          # REST endpoints — thin wrappers over business.py
-├── mcp.py          # MCP tools — thin wrappers over business.py
-├── service.py      # Wires the MCP server instance (used by mcp_entry.py)
-└── auth.py         # API key dependency
+├── models.py           # Pydantic schemas (shared by API and MCP)
+├── db.py               # SQLite data access layer
+├── business.py         # Domain logic (the single source of truth)
+├── api.py              # REST endpoints — thin wrappers over business.py
+├── mcp.py              # MCP tool definitions — thin wrappers over business.py
+├── service.py          # Wires the MCP server instance (used by mcp_entry.py)
+├── auth.py             # API key dependency
+├── limiter.py          # Shared rate limiter instance
+└── agents/
+    ├── models.py       # Agent request/response schemas
+    ├── pricing.py      # PricingAgent logic (pure functions)
+    └── router.py       # Agent HTTP endpoints (A2A demo)
 ```
 
 ## Key Design Decisions
@@ -29,6 +34,21 @@ Different rate limits for reads (60/min) vs writes (30/min) reflect real-world A
 ### Structured error responses
 All errors follow `{"error": {"code": "NOT_FOUND", "message": "..."}}`. A single `http_exception_handler` on the app handles this centrally — individual endpoints just raise `HTTPException` as normal. The schema is documented in Swagger via the `responses=` parameter on each endpoint.
 
+### Agent-to-Agent (A2A) communication
+
+`ProductAgent` calls `PricingAgent` via HTTP using `httpx`. In the default setup both agents run in the same FastAPI process — `ProductAgent` is effectively calling itself on the same port. This is intentional for the demo: it keeps the setup simple while demonstrating the communication pattern.
+
+**What is already ready for external use:**
+- `PricingAgent` is a plain authenticated HTTP endpoint — any external system with a valid `X-API-Key` can call it today, no changes needed.
+- `ProductAgent` reads `PRICING_AGENT_URL` from an environment variable. Point it at a remote host and it calls a remote `PricingAgent` with zero code changes.
+
+**What is not yet implemented (full A2A):**
+- Agent discovery — there is no agent card or capability advertisement. A calling agent must know the URL and schema upfront.
+- Capability negotiation — agents cannot describe what they can do to each other dynamically.
+- These are the pieces the Google A2A specification adds on top of plain HTTP. They are the natural next step.
+
+The pricing logic lives in pure functions in `pricing.py`, keeping it testable without a running server.
+
 ## Entry Points
 
 | File | Purpose |
@@ -41,5 +61,7 @@ All errors follow `{"error": {"code": "NOT_FOUND", "message": "..."}}`. A single
 **Add a new endpoint:** add a function in `business.py`, then a route in `api.py`.
 
 **Add a new MCP tool:** add a function in `business.py`, then a `@mcp.tool()` in `mcp.py`.
+
+**Add a new agent:** add logic functions in `app/agents/`, register a route in `agents/router.py`. Point `PRICING_AGENT_URL` (or a new env var) to a separate host to run it as a true remote agent.
 
 **Change the database:** only `db.py` needs to change; nothing else depends on SQLite directly.
