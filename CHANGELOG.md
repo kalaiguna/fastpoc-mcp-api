@@ -7,11 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-28
+
 ### Added
 - SSE streaming endpoints for both agents — receive incremental progress events then the final result without polling:
   - `POST /api/v1/agents/pricing/stream` — emits `working` progress events then `completed` with pricing result
   - `POST /api/v1/agents/product/stream` — emits `working` progress events (fetch, pricing call, combine) then `completed` with full analysis
 - `streamEndpoint` field added to `AgentSkill` model; populated on all skills in `cards.py` so callers can discover the stream URL from the Agent Card
+
+### Changed
+- CI runner pinned to `ubuntu-24.04` to avoid the upcoming `ubuntu-latest` migration to Ubuntu 26
 
 ## [1.7.0] - 2026-09-27
 
@@ -104,7 +109,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.4.0...v1.5.0
