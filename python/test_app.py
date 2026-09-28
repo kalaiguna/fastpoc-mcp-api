@@ -29,7 +29,8 @@ def setup_test_db():
     # Save original references
     original_db_app = app_db_module.db
     original_db_api = app_api_module.db
-    
+    original_db_agents = agents_router_module.db
+
     # Patch the global db instances
     app_db_module.db = test_db
     app_api_module.db = test_db
@@ -40,7 +41,7 @@ def setup_test_db():
     # Restore original references
     app_db_module.db = original_db_app
     app_api_module.db = original_db_api
-    agents_router_module.db = test_db
+    agents_router_module.db = original_db_agents
     
     # Cleanup test database file
     if os.path.exists(test_db_path):
@@ -297,7 +298,7 @@ def test_service_agent_card(test_client):
     assert "skills" in data
     assert len(data["skills"]) == 2
     assert data["authentication"]["schemes"] == ["apiKey"]
-    assert data["capabilities"]["streaming"] is False
+    assert data["capabilities"]["streaming"] is True
 
 
 def test_pricing_agent_card(test_client):

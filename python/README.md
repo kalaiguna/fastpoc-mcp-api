@@ -9,7 +9,7 @@ This project implements a simple Product CRUD application that exposes both a RE
 - **Versioned API**: `/api/v1/products` with Swagger UI at `/api/v1/docs`
 - **Database**: SQLite with automatic initialization and proper path management
 - **Docker Support**: Ready-to-use Dockerfile and docker-compose.yml
-- **Comprehensive Tests**: 25 tests covering CRUD, auth, A2A agents, task lifecycle, and agent cards
+- **Comprehensive Tests**: 29 tests covering CRUD, auth, A2A agents, task lifecycle, agent cards, and streaming
 - **Configuration**: Environment-based settings via `.env` file or variables
 
 ## Prerequisites
@@ -114,6 +114,7 @@ This runs 25 tests covering:
 - A2A agents: PricingAgent, ProductAgent (sync and async)
 - Agent Cards: service card, per-agent cards
 - Task lifecycle: submit, poll, 404, failed task
+- SSE streaming: pricing and product agents, not-found handling
 
 ## API Endpoints
 
@@ -136,6 +137,8 @@ All endpoints are prefixed with `/api/v1`:
 | POST | `/api/v1/agents/product/submit` | ProductAgent — async submit |
 | GET | `/api/v1/agents/product/card` | ProductAgent card |
 | GET | `/api/v1/agents/tasks/{id}` | Poll task status |
+| POST | `/api/v1/agents/pricing/stream` | PricingAgent — SSE stream |
+| POST | `/api/v1/agents/product/stream` | ProductAgent — SSE stream |
 
 ### Example Requests
 

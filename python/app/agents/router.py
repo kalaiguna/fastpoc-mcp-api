@@ -49,6 +49,19 @@ def run_pricing_agent(request: Request, body: AgentRequest):
     return analyze_pricing(product.price, product.stock)
 
 
+def _call_pricing_agent(product_id: int) -> PricingResult:
+    """Call PricingAgent via HTTP and return the result. Raises on any failure."""
+    api_key = os.getenv("API_KEY", "dev-key-changeme")
+    response = httpx.post(
+        f"{PRICING_AGENT_URL}/api/{API_VERSION}/agents/pricing/run",
+        json={"product_id": product_id},
+        headers={"X-API-Key": api_key},
+        timeout=5.0,
+    )
+    response.raise_for_status()
+    return PricingResult(**response.json())
+
+
 @router.post("/product/run", response_model=ProductAnalysis,
              dependencies=[Depends(require_api_key)])
 @limiter.limit("30/minute")
@@ -62,18 +75,9 @@ def run_product_agent(request: Request, body: AgentRequest):
     except ProductNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-    # A2A call: ProductAgent delegates pricing analysis to PricingAgent
-    api_key = os.getenv("API_KEY", "dev-key-changeme")
     try:
-        response = httpx.post(
-            f"{PRICING_AGENT_URL}/api/{API_VERSION}/agents/pricing/run",
-            json={"product_id": body.product_id},
-            headers={"X-API-Key": api_key},
-            timeout=5.0,
-        )
-        response.raise_for_status()
-        pricing = PricingResult(**response.json())
-    except httpx.HTTPError as e:
+        pricing = _call_pricing_agent(body.product_id)
+    except Exception as e:
         raise HTTPException(status_code=502, detail=f"PricingAgent unavailable: {e}")
 
     return ProductAnalysis(
@@ -127,15 +131,7 @@ def _run_product_task(task_id: str, product_id: int) -> None:
     task_store.save(task)
     try:
         product = db.get_by_id(product_id)
-        api_key = os.getenv("API_KEY", "dev-key-changeme")
-        response = httpx.post(
-            f"{PRICING_AGENT_URL}/api/{API_VERSION}/agents/pricing/run",
-            json={"product_id": product_id},
-            headers={"X-API-Key": api_key},
-            timeout=5.0,
-        )
-        response.raise_for_status()
-        pricing = PricingResult(**response.json())
+        pricing = _call_pricing_agent(product_id)
         analysis = ProductAnalysis(
             product_id=product.id,
             name=product.name,
@@ -215,8 +211,11 @@ def _stream_pricing(product_id: int) -> Generator[str, None, None]:
         yield _sse({"status": "failed", "error": f"Product {product_id} not found"})
         return
     yield _sse({"status": "working", "step": "Analysing price and stock level..."})
-    result = analyze_pricing(product.price, product.stock)
-    yield _sse({"status": "completed", "result": result.model_dump()})
+    try:
+        result = analyze_pricing(product.price, product.stock)
+        yield _sse({"status": "completed", "result": result.model_dump()})
+    except Exception as e:
+        yield _sse({"status": "failed", "error": str(e)})
 
 
 def _stream_product(product_id: int) -> Generator[str, None, None]:
@@ -227,28 +226,23 @@ def _stream_product(product_id: int) -> Generator[str, None, None]:
         yield _sse({"status": "failed", "error": f"Product {product_id} not found"})
         return
     yield _sse({"status": "working", "step": "Calling PricingAgent..."})
-    api_key = os.getenv("API_KEY", "dev-key-changeme")
     try:
-        response = httpx.post(
-            f"{PRICING_AGENT_URL}/api/{API_VERSION}/agents/pricing/run",
-            json={"product_id": product_id},
-            headers={"X-API-Key": api_key},
-            timeout=5.0,
-        )
-        response.raise_for_status()
-        pricing = PricingResult(**response.json())
-    except httpx.HTTPError as e:
+        pricing = _call_pricing_agent(product_id)
+    except Exception as e:
         yield _sse({"status": "failed", "error": f"PricingAgent unavailable: {e}"})
         return
     yield _sse({"status": "working", "step": "Combining analysis..."})
-    analysis = ProductAnalysis(
-        product_id=product.id,
-        name=product.name,
-        current_price=product.price,
-        stock=product.stock,
-        pricing=pricing,
-    )
-    yield _sse({"status": "completed", "result": analysis.model_dump()})
+    try:
+        analysis = ProductAnalysis(
+            product_id=product.id,
+            name=product.name,
+            current_price=product.price,
+            stock=product.stock,
+            pricing=pricing,
+        )
+        yield _sse({"status": "completed", "result": analysis.model_dump()})
+    except Exception as e:
+        yield _sse({"status": "failed", "error": str(e)})
 
 
 @router.post("/pricing/stream", dependencies=[Depends(require_api_key)])
@@ -261,6 +255,7 @@ def stream_pricing_agent(request: Request, body: AgentRequest):
     return StreamingResponse(
         _stream_pricing(body.product_id),
         media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
@@ -274,4 +269,5 @@ def stream_product_agent(request: Request, body: AgentRequest):
     return StreamingResponse(
         _stream_product(body.product_id),
         media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

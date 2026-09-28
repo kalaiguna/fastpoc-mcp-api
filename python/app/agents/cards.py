@@ -7,7 +7,7 @@ _AUTH = AgentAuthentication(
     credentials="X-API-Key request header. Set API_KEY env var on the server.",
 )
 _CAPABILITIES = AgentCapabilities(
-    streaming=False,
+    streaming=True,
     pushNotifications=False,
     stateTransitionHistory=False,
 )
@@ -101,6 +101,8 @@ def service_card() -> AgentCard:
                 name="PricingAgent",
                 description="Rule-based pricing recommendations based on price and stock level.",
                 endpoint=f"{prefix}/agents/pricing/run",
+                submitEndpoint=f"{prefix}/agents/pricing/submit",
+                streamEndpoint=f"{prefix}/agents/pricing/stream",
                 examples=[{"product_id": 1}],
             ),
             AgentSkill(

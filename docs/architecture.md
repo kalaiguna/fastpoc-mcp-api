@@ -49,9 +49,8 @@ All errors follow `{"error": {"code": "NOT_FOUND", "message": "..."}}`. A single
 
 **What is not yet implemented (full A2A spec):**
 - Capability negotiation — agents cannot describe what they can do to each other dynamically at runtime.
-- Streaming — incremental progress via SSE during long-running tasks.
-- Push notifications — callback URL on submit instead of polling.
-- These are the next items in the backlog.
+- Push notifications — callback URL on submit instead of polling (caller must expose an HTTP endpoint to receive the callback).
+- These remain in the backlog.
 
 The pricing logic lives in pure functions in `pricing.py`, keeping it testable without a running server.
 

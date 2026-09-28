@@ -4,9 +4,6 @@ Prioritised list of planned improvements and features. Items within each priorit
 
 ## Medium Priority
 
-### A2A: Streaming Responses
-Agents stream incremental progress updates back to the caller via SSE (Server-Sent Events). FastAPI supports this natively via `StreamingResponse`. Useful for long-running agent tasks where the caller wants live feedback.
-
 ### A2A: Push Notifications
 Instead of polling, the caller provides a callback URL when submitting a task. The agent calls back when the task completes. Requires background task execution (`FastAPI BackgroundTasks`) and basic retry logic.
 

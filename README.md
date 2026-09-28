@@ -34,12 +34,13 @@ fastpoc/
   - API key authentication (`X-API-Key` header)
   - Rate limiting (60/min reads, 30/min writes)
   - Structured error responses (`{"error": {"code": "...", "message": "..."}}`)
-  - A2A agents: `PricingAgent` and `ProductAgent` with sync and async endpoints
+  - A2A agents: `PricingAgent` and `ProductAgent` with sync, async, and streaming endpoints
   - Agent Cards (`/.well-known/agent.json`) for service discovery
   - Async task lifecycle: submit → poll → result
+  - SSE streaming: live progress events via `text/event-stream`
   - Docker support with health checks
   - GitHub Actions CI
-  - Comprehensive test suite (25 tests)
+  - Comprehensive test suite (29 tests)
   - Environment-based configuration
   - Structured logging
 
@@ -95,6 +96,7 @@ cd python && python main.py
 - Open `http://localhost:8081/.well-known/agent.json` in a browser — the Agent Card describes what agents exist, what they can do, and where to call them
 - Run `python examples/a2a_client.py` — walks through the full flow with printed output: discover → submit → poll → result
 - Or call agents directly in Swagger: `POST /api/v1/agents/product/run` with `{"product_id": 1}`
+- For live progress: `POST /api/v1/agents/product/stream` — returns `text/event-stream` with `working` events then the final `completed` result
 
 **Reading the code**
 - CRUD logic: `python/app/business.py` → `api.py`
