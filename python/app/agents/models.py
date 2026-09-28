@@ -68,6 +68,7 @@ class AgentSkill(BaseModel):
     description: str
     endpoint: str
     submitEndpoint: Optional[str] = None  # async submit path; poll via /agents/tasks/{id}
+    streamEndpoint: Optional[str] = None  # SSE stream path; yields progress + result events
     inputModes: List[str] = ["application/json"]
     outputModes: List[str] = ["application/json"]
     examples: Optional[List[Any]] = None

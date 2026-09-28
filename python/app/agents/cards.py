@@ -47,6 +47,7 @@ def pricing_agent_card() -> AgentCard:
                 description="Returns suggested_min, suggested_max, discount_eligible, and reasoning for a product.",
                 endpoint=f"{prefix}/agents/pricing/run",
                 submitEndpoint=f"{prefix}/agents/pricing/submit",
+                streamEndpoint=f"{prefix}/agents/pricing/stream",
                 examples=[{"product_id": 1}],
             )
         ],
@@ -73,6 +74,7 @@ def product_agent_card() -> AgentCard:
                 description="Returns product details combined with a pricing recommendation sourced from PricingAgent.",
                 endpoint=f"{prefix}/agents/product/run",
                 submitEndpoint=f"{prefix}/agents/product/submit",
+                streamEndpoint=f"{prefix}/agents/product/stream",
                 examples=[{"product_id": 1}],
             )
         ],
@@ -107,6 +109,7 @@ def service_card() -> AgentCard:
                 description="Combined product + pricing analysis. Delegates pricing to PricingAgent via HTTP.",
                 endpoint=f"{prefix}/agents/product/run",
                 submitEndpoint=f"{prefix}/agents/product/submit",
+                streamEndpoint=f"{prefix}/agents/product/stream",
                 examples=[{"product_id": 1}],
             ),
         ],

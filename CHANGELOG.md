@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- SSE streaming endpoints for both agents — receive incremental progress events then the final result without polling:
+  - `POST /api/v1/agents/pricing/stream` — emits `working` progress events then `completed` with pricing result
+  - `POST /api/v1/agents/product/stream` — emits `working` progress events (fetch, pricing call, combine) then `completed` with full analysis
+- `streamEndpoint` field added to `AgentSkill` model; populated on all skills in `cards.py` so callers can discover the stream URL from the Agent Card
+
 ## [1.7.0] - 2026-09-27
 
 ### Added
