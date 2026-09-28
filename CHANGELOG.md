@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-09-28
+
+### Fixed
+- SSE generators now emit a `failed` event on any unexpected exception instead of silently truncating the stream
+- `_stream_product` previously caught only `httpx.HTTPError`, missing `ValidationError` and `JSONDecodeError` from PricingAgent responses — now catches all exceptions
+- SSE responses now include `Cache-Control: no-cache` and `X-Accel-Buffering: no` headers to prevent proxy buffering
+- `service_card()` PricingAgent skill was missing `submitEndpoint` and `streamEndpoint` — fixed to match per-agent card
+- `AgentCapabilities.streaming` corrected from `False` to `True`
+- Test teardown was restoring `agents_router_module.db` to the test DB instead of the original — fixed
+
+### Changed
+- Extracted `_call_pricing_agent()` helper, eliminating three copies of the same `httpx.post` block in `router.py`
+
 ## [1.8.0] - 2026-09-28
 
 ### Added
@@ -109,7 +122,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.5.0...v1.6.0
