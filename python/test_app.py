@@ -377,3 +377,86 @@ def test_submit_pricing_task_invalid_product(test_client):
     data = poll.json()
     assert data["status"] == "failed"
     assert data["error"] is not None
+
+
+# --- SSE streaming tests ---
+
+def _parse_sse(text: str) -> list:
+    """Parse SSE response body into a list of event dicts."""
+    import json as _json
+    events = []
+    for line in text.splitlines():
+        if line.startswith("data: "):
+            events.append(_json.loads(line[6:]))
+    return events
+
+
+def test_stream_pricing_agent(test_client):
+    """PricingAgent SSE stream emits working events then a completed event with result."""
+    response = test_client.post(
+        "/api/v1/agents/pricing/stream",
+        json={"product_id": 1},
+        headers=API_KEY_HEADER,
+    )
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+    events = _parse_sse(response.text)
+    statuses = [e["status"] for e in events]
+    assert "working" in statuses
+    assert statuses[-1] == "completed"
+    assert "result" in events[-1]
+    result = events[-1]["result"]
+    assert "suggested_min" in result
+    assert "suggested_max" in result
+    assert "discount_eligible" in result
+
+
+def test_stream_pricing_agent_not_found(test_client):
+    """PricingAgent SSE stream emits a failed event for a non-existent product."""
+    response = test_client.post(
+        "/api/v1/agents/pricing/stream",
+        json={"product_id": 99999},
+        headers=API_KEY_HEADER,
+    )
+    assert response.status_code == 200
+    events = _parse_sse(response.text)
+    assert events[-1]["status"] == "failed"
+    assert "error" in events[-1]
+
+
+def test_stream_product_agent(test_client):
+    """ProductAgent SSE stream emits working events then a completed event with combined result."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "suggested_min": 9.5,
+        "suggested_max": 10.5,
+        "discount_eligible": False,
+        "reasoning": "Stock levels are healthy — hold current price.",
+    }
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.agents.router.httpx.post", return_value=mock_response):
+        response = test_client.post(
+            "/api/v1/agents/product/stream",
+            json={"product_id": 1},
+            headers=API_KEY_HEADER,
+        )
+
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+    events = _parse_sse(response.text)
+    statuses = [e["status"] for e in events]
+    assert "working" in statuses
+    assert statuses[-1] == "completed"
+    result = events[-1]["result"]
+    assert result["product_id"] == 1
+    assert "pricing" in result
+
+
+def test_stream_agent_card_includes_stream_endpoint(test_client):
+    """Agent Cards expose streamEndpoint on all skills."""
+    pricing_card = test_client.get("/api/v1/agents/pricing/card").json()
+    assert pricing_card["skills"][0]["streamEndpoint"] is not None
+
+    product_card = test_client.get("/api/v1/agents/product/card").json()
+    assert product_card["skills"][0]["streamEndpoint"] is not None
