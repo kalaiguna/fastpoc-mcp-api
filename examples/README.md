@@ -2,6 +2,41 @@
 
 Standalone scripts that demonstrate the FastPOC agent service from a caller's perspective.
 
+See [docs/llm-integration.md](../docs/llm-integration.md) for the full guide on connecting an LLM to this service.
+
+## gemini_tool_client.py
+
+Demonstrates programmatic LLM tool use (Track 3 of the LLM integration guide). Gemini Flash receives a user prompt and a set of tool definitions that map to the FastPOC REST API. When Gemini decides a tool is needed it returns a structured `function_call`. The script executes the call, feeds the result back, and repeats until Gemini produces a final text answer — the core agentic loop pattern.
+
+### Prerequisites
+
+```bash
+pip install google-generativeai httpx
+```
+
+Get a free Gemini API key (no credit card) at [https://aistudio.google.com/](https://aistudio.google.com/)
+
+Start the server:
+
+```bash
+cd python && python main.py
+```
+
+### Run
+
+```bash
+GEMINI_API_KEY=your-key python examples/gemini_tool_client.py
+```
+
+### Environment variables
+
+| Variable        | Default                                              | Description                  |
+|-----------------|------------------------------------------------------|------------------------------|
+| `GEMINI_API_KEY`| *(required)*                                         | Gemini API key               |
+| `AGENT_BASE_URL`| `http://localhost:8081`                              | FastPOC base URL             |
+| `API_KEY`       | `dev-key-changeme`                                   | FastPOC API key              |
+| `PROMPT`        | `List all products and tell me which ones have low stock.` | Question for Gemini |
+
 ## a2a_client.py
 
 Demonstrates the full Agent-to-Agent (A2A) flow in four steps:

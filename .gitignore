@@ -38,3 +38,4 @@ Thumbs.db
 # Docker
 .dockerenv
 ```
+python/mcp-proxy-config.json
