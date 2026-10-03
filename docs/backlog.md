@@ -4,6 +4,18 @@ Prioritised list of planned improvements and features. Items within each priorit
 
 ## Medium Priority
 
+### gRPC Layer
+Add a gRPC transport alongside REST and MCP — the same business logic exposed three ways. Define `ProductService` and `PricingService` protos; implement server-streaming RPCs that map to the existing SSE streaming. Demonstrates typed contracts, binary efficiency, and service-to-service patterns vs. REST's human-friendly JSON.
+
+### WebSocket Layer
+Bidirectional real-time channel using `fastapi-websockets`. Complements the one-directional SSE streaming already in place — useful for interactive scenarios where the client also sends updates mid-stream (e.g. cancellation, refinement).
+
+### OpenAPI → LLM Tool Schema Codegen
+Auto-generate Gemini / OpenAI function declarations from the existing FastAPI OpenAPI spec. Makes the bridge between REST and AI tool use explicit and keeps tool schemas in sync with the API automatically.
+
+### MCP OAuth / Authentication
+Implement the MCP 2025-03-26+ auth spec so the MCP server requires a bearer token. Makes the MCP transport production-ready and demonstrates how to scope tool access per caller — relevant for multi-agent scenarios.
+
 ### A2A: Push Notifications
 Instead of polling, the caller provides a callback URL when submitting a task. The agent calls back when the task completes. Requires background task execution (`FastAPI BackgroundTasks`) and basic retry logic.
 
