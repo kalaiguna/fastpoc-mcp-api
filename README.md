@@ -107,7 +107,7 @@ cd python && python main.py
 ## Documentation
 
 - [Architecture](docs/architecture.md) - design decisions, module structure, and how to extend the project
-- [LLM Integration](docs/llm-integration.md) - connect an LLM to the service via MCP SuperAssistant, Claude Desktop, or Gemini API
+- [LLM Integration](docs/llm-integration.md) - connect an LLM to the service via MCP Inspector, Claude Desktop, or Gemini API
 - [Backlog](docs/backlog.md) - planned features and improvements, prioritised
 
 ## Testing
