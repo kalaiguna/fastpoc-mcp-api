@@ -13,6 +13,9 @@ Bidirectional real-time channel using `fastapi-websockets`. Complements the one-
 ### OpenAPI → LLM Tool Schema Codegen
 Auto-generate Gemini / OpenAI function declarations from the existing FastAPI OpenAPI spec. Makes the bridge between REST and AI tool use explicit and keeps tool schemas in sync with the API automatically.
 
+### GraphQL Layer
+Add a GraphQL endpoint using `strawberry-graphql` with FastAPI integration. Expose `Query` (list, get product), `Mutation` (create, update, delete), and a `Subscription` for real-time product updates. Demonstrates flexible field selection and nested queries vs. REST's fixed response shapes — same business logic, different query model.
+
 ### MCP OAuth / Authentication
 Implement the MCP 2025-03-26+ auth spec so the MCP server requires a bearer token. Makes the MCP transport production-ready and demonstrates how to scope tool access per caller — relevant for multi-agent scenarios.
 
