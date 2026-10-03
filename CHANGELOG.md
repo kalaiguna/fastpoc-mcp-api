@@ -7,9 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-10-03
+
 ### Added
 - `docs/llm-integration.md` — guide covering three tracks for connecting an LLM to the service: MCP Inspector (validate your server), Claude Desktop (native MCP), and Gemini API (programmatic, free tier); includes supergateway setup for browser extension AI integration
 - `examples/gemini_tool_client.py` — standalone script demonstrating the agentic tool-use loop with Gemini Flash; defines FastPOC endpoints as function declarations and executes tool calls in a loop until Gemini produces a final answer
+
+### Changed
+- `python/mcp_entry.py` now accepts MCP protocol version `2025-11-25`, enabling compatibility with newer MCP clients
 
 ## [1.9.0] - 2026-09-28
 
@@ -126,7 +131,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.6.0...v1.7.0
