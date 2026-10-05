@@ -4,6 +4,59 @@ Standalone scripts that demonstrate the FastPOC agent service from a caller's pe
 
 See [docs/llm-integration.md](../docs/llm-integration.md) for the full guide on connecting an LLM to this service.
 
+## openapi_tool_codegen.py
+
+Reads the FastAPI OpenAPI spec and generates Gemini and OpenAI tool definitions automatically. Eliminates hand-maintaining tool schemas — re-run whenever the API changes.
+
+### Prerequisites
+
+```bash
+pip install httpx
+```
+
+The server must be running:
+
+```bash
+cd python && python main.py
+```
+
+### Run
+
+```bash
+# Gemini + OpenAI JSON (default)
+python examples/openapi_tool_codegen.py
+
+# OpenAI only
+python examples/openapi_tool_codegen.py --format openai
+
+# Gemini only
+python examples/openapi_tool_codegen.py --format gemini
+
+# Python snippet — ready to paste into a client
+python examples/openapi_tool_codegen.py --output python
+
+# Custom server URL
+python examples/openapi_tool_codegen.py --url http://my-host/openapi.json
+```
+
+### Options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--url` | `$AGENT_BASE_URL/openapi.json` | OpenAPI spec URL |
+| `--format` | `both` | `gemini`, `openai`, or `both` |
+| `--output` | `json` | `json` or `python` |
+| `--skip` | `/health,/ready,/openapi,/docs,/redoc,/.well-known` | Path prefixes to exclude |
+
+### Expected output (stderr)
+
+```
+Fetching spec from http://localhost:8081/openapi.json ...
+Extracted 14 tool(s): run_pricing_agent, run_product_agent, ..., list_products, create_product, get_product, update_product, delete_product
+```
+
+---
+
 ## gemini_tool_client.py
 
 Demonstrates programmatic LLM tool use (Track 3 of the LLM integration guide). Gemini Flash receives a user prompt and a set of tool definitions that map to the FastPOC REST API. When Gemini decides a tool is needed it returns a structured `function_call`. The script executes the call, feeds the result back, and repeats until Gemini produces a final text answer — the core agentic loop pattern.
