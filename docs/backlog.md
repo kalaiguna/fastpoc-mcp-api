@@ -7,8 +7,8 @@ Prioritised list of planned improvements and features. Items within each priorit
 ### A2A: Push Notifications
 Instead of polling, the caller provides a callback URL when submitting a task. The agent calls back when the task completes. Requires background task execution (`FastAPI BackgroundTasks`) and basic retry logic.
 
-### GraphQL Layer
-Add a GraphQL endpoint using `strawberry-graphql` with FastAPI integration. Expose `Query` (list, get product), `Mutation` (create, update, delete), and a `Subscription` for real-time product updates. Demonstrates flexible field selection and nested queries vs. REST's fixed response shapes — same business logic, different query model.
+### GraphQL: Subscription
+Add a `Subscription` for real-time product updates over WebSocket, backed by an in-process pub/sub bus that mutations publish to. Rounds out the streaming story across transports. Follow-up to the Query + Mutation GraphQL layer already shipped.
 
 ## Low Priority
 
