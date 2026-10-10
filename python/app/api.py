@@ -14,6 +14,8 @@ from app.auth import require_api_key
 from app.limiter import limiter
 from app.agents.router import router as agents_router
 from app.agents.cards import service_card
+from strawberry.fastapi import GraphQLRouter
+from app.graphql_schema import schema as graphql_schema
 
 _STATUS_TO_CODE = {
     400: "BAD_REQUEST",
@@ -49,6 +51,11 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.include_router(agents_router, prefix=f"/api/{API_VERSION}")
+
+# GraphQL transport — same business logic as REST. Requires the API key (parity
+# with the REST product endpoints); set X-API-Key in the GraphiQL headers panel.
+graphql_router = GraphQLRouter(graphql_schema)
+app.include_router(graphql_router, prefix="/graphql", dependencies=[Depends(require_api_key)])
 
 
 @app.exception_handler(HTTPException)

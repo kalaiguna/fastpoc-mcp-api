@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- GraphQL transport — a fourth interface alongside REST, MCP, and gRPC, backed by the same business logic:
+  - `app/graphql_schema.py` — strawberry schema with `Query` (list/get) and `Mutation` (create/update/delete) over `business.py`; domain exceptions propagate as GraphQL errors
+  - Mounted at `/graphql` in `app/api.py` via `GraphQLRouter`, serving the GraphiQL explorer UI; carries the same `require_api_key` dependency as the REST product routes
+  - `test_graphql.py` — 11 tests covering queries, mutations, error propagation, and endpoint auth
+- `strawberry-graphql[fastapi]` added to `requirements.txt`
+
 ## [1.11.0] - 2026-10-10
 
 ### Added

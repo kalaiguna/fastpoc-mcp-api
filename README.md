@@ -9,7 +9,7 @@ Current focus: Python FastAPI + MCP with a simple Product CRUD domain as the wor
 ```
 fastpoc/
 ├── python/          # Python implementation using FastAPI + MCP
-│   ├── app/         # Application modules (REST, MCP, gRPC, agents)
+│   ├── app/         # Application modules (REST, MCP, gRPC, GraphQL, agents)
 │   ├── protos/      # gRPC service definitions (.proto)
 │   ├── main.py      # FastAPI entry point
 │   ├── mcp_entry.py # MCP server entry point
@@ -30,7 +30,8 @@ fastpoc/
   - Versioned API endpoints (`/api/v1/products`)
   - MCP Server for AI tool integration
   - gRPC server with typed contracts and server-streaming
-  - Shared codebase across REST, MCP, and gRPC
+  - GraphQL endpoint with GraphiQL explorer at `/graphql`
+  - Shared codebase across REST, MCP, gRPC, and GraphQL
   - SQLite database with automatic initialization
   - Full CRUD operations with input validation
   - Health check endpoints (`/health`, `/ready`)
@@ -43,7 +44,7 @@ fastpoc/
   - SSE streaming: live progress events via `text/event-stream`
   - Docker support with health checks
   - GitHub Actions CI
-  - Comprehensive test suite (42 tests)
+  - Comprehensive test suite (53 tests)
   - Environment-based configuration
   - Structured logging
 
@@ -100,6 +101,11 @@ cd python && python main.py
 - Run `python examples/grpc_client.py` — unary CRUD calls plus the server-streaming `StreamPricingAnalysis`
 - Contract defined in `python/protos/product.proto`; regenerate stubs with `python scripts/gen_grpc.py`
 
+**GraphQL**
+- With the API server running, open `http://localhost:8081/graphql` — the GraphiQL explorer UI
+- Set `X-API-Key: dev-key-changeme` in GraphiQL's headers panel, then run a query like `{ products { id name price } }`
+- Schema (`Query` + `Mutation`) defined in `python/app/graphql_schema.py`
+
 **A2A (Agent-to-Agent)**
 - Open `http://localhost:8081/.well-known/agent.json` in a browser — the Agent Card describes what agents exist, what they can do, and where to call them
 - Run `python examples/a2a_client.py` — walks through the full flow with printed output: discover → submit → poll → result
@@ -110,6 +116,7 @@ cd python && python main.py
 - CRUD logic: `python/app/business.py` → `api.py`
 - MCP tools: `python/app/mcp.py`
 - gRPC servicers: `python/app/grpc_server.py` (contract in `python/protos/product.proto`)
+- GraphQL schema: `python/app/graphql_schema.py`
 - A2A agents: `python/app/agents/router.py`, `pricing.py`, `cards.py`
 - See [Architecture](docs/architecture.md) for design decisions and how the layers relate
 

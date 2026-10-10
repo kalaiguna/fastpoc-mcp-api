@@ -19,3 +19,6 @@ pytest-asyncio>=0.21.0,<1.0.0
 
 # Rate limiting
 slowapi>=0.1.9,<0.2.0
+
+# GraphQL support
+strawberry-graphql[fastapi]>=0.333.0,<1.0.0

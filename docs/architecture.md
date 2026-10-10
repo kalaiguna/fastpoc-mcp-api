@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project exposes a single Product database through three transports: a REST API (FastAPI), an MCP Server (Model Context Protocol), and a gRPC server. All three share the same business logic — no duplication. An Agent layer demonstrates the A2A (Agent-to-Agent) communication pattern on top of the REST API.
+This project exposes a single Product database through four transports: a REST API (FastAPI), an MCP Server (Model Context Protocol), a gRPC server, and a GraphQL endpoint. All four share the same business logic — no duplication. An Agent layer demonstrates the A2A (Agent-to-Agent) communication pattern on top of the REST API.
 
 ```
 app/
@@ -13,6 +13,7 @@ app/
 ├── mcp.py              # MCP tool definitions — thin wrappers over business.py
 ├── grpc_server.py      # gRPC servicers — thin wrappers over business.py
 ├── grpc_gen/           # Generated gRPC stubs (from protos/product.proto)
+├── graphql_schema.py   # GraphQL schema — thin wrappers over business.py
 ├── service.py          # Wires the MCP server instance (used by mcp_entry.py)
 ├── auth.py             # API key dependency
 ├── limiter.py          # Shared rate limiter instance
@@ -27,7 +28,11 @@ app/
 ## Key Design Decisions
 
 ### Shared business layer
-`business.py` holds all domain logic. `api.py`, `mcp.py`, and `grpc_server.py` are intentionally thin — they handle transport concerns (HTTP status codes, MCP tool signatures, gRPC status codes) and delegate everything else. Adding a fourth interface (e.g. GraphQL) means writing another thin wrapper, not touching business logic.
+`business.py` holds all domain logic. `api.py`, `mcp.py`, `grpc_server.py`, and `graphql_schema.py` are intentionally thin — they handle transport concerns (HTTP status codes, MCP tool signatures, gRPC status codes, GraphQL error propagation) and delegate everything else. Adding another interface means writing one more thin wrapper, not touching business logic.
+
+### GraphQL transport
+
+`graphql_schema.py` defines a strawberry schema with `Query` (list/get) and `Mutation` (create/update/delete) over `business.py`. It is mounted at `/graphql` in `api.py` via `GraphQLRouter`, which also serves the GraphiQL explorer UI on a browser GET. Domain exceptions (`ProductNotFoundError`, Pydantic `ValidationError`) propagate as GraphQL errors. The endpoint carries the same `require_api_key` dependency as the REST product routes — since it exposes the same data, leaving it open would bypass REST auth. In GraphiQL, set `X-API-Key` in the headers panel.
 
 ### gRPC transport
 
@@ -75,6 +80,8 @@ The pricing logic lives in pure functions in `pricing.py`, keeping it testable w
 **Add a new MCP tool:** add a function in `business.py`, then a `@mcp.tool()` in `mcp.py`.
 
 **Add a new gRPC method:** declare it in `protos/product.proto`, run `python scripts/gen_grpc.py` to regenerate stubs, then implement the servicer method in `grpc_server.py` over `business.py`.
+
+**Add a new GraphQL field:** add a resolver to `Query` or `Mutation` in `graphql_schema.py` over `business.py`. The schema updates automatically.
 
 **Add a new agent:** add logic functions in `app/agents/`, register a route in `agents/router.py`. Point `PRICING_AGENT_URL` (or a new env var) to a separate host to run it as a true remote agent.
 

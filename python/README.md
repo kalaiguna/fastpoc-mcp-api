@@ -1,15 +1,15 @@
 # FastAPI + MCP Product CRUD Prototype
 
-This project implements a simple Product CRUD application that exposes a REST API (via FastAPI), an MCP Server (via Model Context Protocol), and a gRPC server, all sharing the same SQLite database.
+This project implements a simple Product CRUD application that exposes a REST API (via FastAPI), an MCP Server (via Model Context Protocol), a gRPC server, and a GraphQL endpoint, all sharing the same SQLite database.
 
 ## ✨ Key Features
 
-- **Three Transports**: REST API, MCP Server, and gRPC sharing the same business logic
+- **Four Transports**: REST API, MCP Server, gRPC, and GraphQL sharing the same business logic
 - **Production-Ready**: Input validation, health checks, logging, and error handling
 - **Versioned API**: `/api/v1/products` with Swagger UI at `/api/v1/docs`
 - **Database**: SQLite with automatic initialization and proper path management
 - **Docker Support**: Ready-to-use Dockerfile and docker-compose.yml
-- **Comprehensive Tests**: 42 tests covering CRUD, auth, A2A agents, task lifecycle, agent cards, streaming, and gRPC
+- **Comprehensive Tests**: 53 tests covering CRUD, auth, A2A agents, task lifecycle, agent cards, streaming, gRPC, and GraphQL
 - **Configuration**: Environment-based settings via `.env` file or variables
 
 ## Prerequisites
@@ -102,6 +102,35 @@ The contract lives in `protos/product.proto`. After editing it, regenerate the s
 python scripts/gen_grpc.py
 ```
 
+## Using the GraphQL Endpoint
+
+The GraphQL endpoint is served by the FastAPI app (start it with `python main.py`). Open the GraphiQL explorer in a browser:
+
+```
+http://localhost:8081/graphql
+```
+
+The endpoint requires the API key (same as the REST product routes). In GraphiQL, open the **Headers** panel and add:
+
+```json
+{ "X-API-Key": "dev-key-changeme" }
+```
+
+Example query and mutation:
+
+```graphql
+query {
+  products { id name price stock }
+  product(id: 1) { name price }
+}
+
+mutation {
+  createProduct(name: "New Widget", price: 12.5, stock: 20) { id name }
+}
+```
+
+The schema (`Query` + `Mutation`) is defined in `app/graphql_schema.py`.
+
 ### Configuring for Claude Desktop
 
 Add the following to your Claude Desktop configuration file:
@@ -125,7 +154,7 @@ Run the comprehensive test suite:
 pytest
 ```
 
-This runs 42 tests covering:
+This runs 53 tests covering:
 - All CRUD operations (Create, Read, Update, Delete)
 - Error handling (404, structured error format)
 - Input validation (negative prices, empty names, etc.)
@@ -136,6 +165,7 @@ This runs 42 tests covering:
 - Task lifecycle: submit, poll, 404, failed task
 - SSE streaming: pricing and product agents, not-found handling
 - gRPC servicers: CRUD, error codes (NOT_FOUND, INVALID_ARGUMENT), server-streaming
+- GraphQL: queries, mutations, error propagation, endpoint auth
 
 ## API Endpoints
 
@@ -160,6 +190,7 @@ All endpoints are prefixed with `/api/v1`:
 | GET | `/api/v1/agents/tasks/{id}` | Poll task status |
 | POST | `/api/v1/agents/pricing/stream` | PricingAgent — SSE stream |
 | POST | `/api/v1/agents/product/stream` | ProductAgent — SSE stream |
+| GET/POST | `/graphql` | GraphQL endpoint + GraphiQL UI (requires `X-API-Key`) |
 
 ### Example Requests
 
@@ -201,10 +232,11 @@ python/
 │   ├── models.py             # Pydantic schemas (shared by API and MCP)
 │   ├── db.py                 # SQLite data access layer
 │   ├── business.py           # Domain logic (single source of truth)
-│   ├── api.py                # REST endpoints
+│   ├── api.py                # REST endpoints (also mounts GraphQL)
 │   ├── mcp.py                # MCP tool definitions
 │   ├── grpc_server.py        # gRPC servicers
 │   ├── grpc_gen/             # Generated gRPC stubs
+│   ├── graphql_schema.py     # GraphQL schema (Query + Mutation)
 │   ├── service.py            # MCP server wiring
 │   ├── auth.py               # API key authentication dependency
 │   ├── limiter.py            # Shared rate limiter instance
