@@ -2,14 +2,6 @@
 
 Prioritised list of planned improvements and features. Items within each priority tier are ordered by recommended implementation sequence.
 
-## High Priority
-
-### OpenAPI → LLM Tool Schema Codegen
-Auto-generate Gemini / OpenAI function declarations from the existing FastAPI OpenAPI spec. Makes the bridge between REST and AI tool use explicit and keeps tool schemas in sync with the API automatically. Small effort, high payoff — directly extends the AI integration theme.
-
-### gRPC Layer
-Add a gRPC transport alongside REST and MCP — the same business logic exposed three ways. Define `ProductService` and `PricingService` protos; implement server-streaming RPCs that map to the existing SSE streaming. Demonstrates typed contracts, binary efficiency, and service-to-service patterns vs. REST's human-friendly JSON.
-
 ## Medium Priority
 
 ### A2A: Push Notifications

@@ -1,15 +1,15 @@
 # FastAPI + MCP Product CRUD Prototype
 
-This project implements a simple Product CRUD application that exposes both a REST API (via FastAPI) and an MCP Server (via Model Context Protocol), sharing the same SQLite database.
+This project implements a simple Product CRUD application that exposes a REST API (via FastAPI), an MCP Server (via Model Context Protocol), and a gRPC server, all sharing the same SQLite database.
 
 ## ✨ Key Features
 
-- **Dual Interface**: REST API and MCP Server sharing the same business logic
+- **Three Transports**: REST API, MCP Server, and gRPC sharing the same business logic
 - **Production-Ready**: Input validation, health checks, logging, and error handling
 - **Versioned API**: `/api/v1/products` with Swagger UI at `/api/v1/docs`
 - **Database**: SQLite with automatic initialization and proper path management
 - **Docker Support**: Ready-to-use Dockerfile and docker-compose.yml
-- **Comprehensive Tests**: 29 tests covering CRUD, auth, A2A agents, task lifecycle, agent cards, and streaming
+- **Comprehensive Tests**: 42 tests covering CRUD, auth, A2A agents, task lifecycle, agent cards, streaming, and gRPC
 - **Configuration**: Environment-based settings via `.env` file or variables
 
 ## Prerequisites
@@ -82,6 +82,26 @@ python mcp_entry.py
 
 This is typically used by an MCP client (like Claude Desktop or an IDE extension) which will spawn this process.
 
+## Running the gRPC Server
+
+To start the gRPC server:
+
+```bash
+python grpc_entry.py
+```
+
+The server listens on port 50051 (override with `GRPC_PORT`). It exposes `ProductService` (CRUD) and `PricingService` (`GetPricing` plus server-streaming `StreamPricingAnalysis`). Try it with the example client:
+
+```bash
+python ../examples/grpc_client.py
+```
+
+The contract lives in `protos/product.proto`. After editing it, regenerate the stubs:
+
+```bash
+python scripts/gen_grpc.py
+```
+
 ### Configuring for Claude Desktop
 
 Add the following to your Claude Desktop configuration file:
@@ -105,7 +125,7 @@ Run the comprehensive test suite:
 pytest
 ```
 
-This runs 25 tests covering:
+This runs 42 tests covering:
 - All CRUD operations (Create, Read, Update, Delete)
 - Error handling (404, structured error format)
 - Input validation (negative prices, empty names, etc.)
@@ -115,6 +135,7 @@ This runs 25 tests covering:
 - Agent Cards: service card, per-agent cards
 - Task lifecycle: submit, poll, 404, failed task
 - SSE streaming: pricing and product agents, not-found handling
+- gRPC servicers: CRUD, error codes (NOT_FOUND, INVALID_ARGUMENT), server-streaming
 
 ## API Endpoints
 
@@ -182,6 +203,8 @@ python/
 │   ├── business.py           # Domain logic (single source of truth)
 │   ├── api.py                # REST endpoints
 │   ├── mcp.py                # MCP tool definitions
+│   ├── grpc_server.py        # gRPC servicers
+│   ├── grpc_gen/             # Generated gRPC stubs
 │   ├── service.py            # MCP server wiring
 │   ├── auth.py               # API key authentication dependency
 │   ├── limiter.py            # Shared rate limiter instance
@@ -191,8 +214,11 @@ python/
 │       ├── cards.py          # Agent Card factories
 │       ├── task_store.py     # Thread-safe in-memory task store
 │       └── router.py         # Agent HTTP endpoints (sync, async, poll, cards)
+├── protos/                   # gRPC service definitions (.proto)
+├── scripts/gen_grpc.py       # Regenerate gRPC stubs from protos/
 ├── main.py                   # FastAPI entry point
 ├── mcp_entry.py              # MCP server entry point (stdio mode)
+├── grpc_entry.py             # gRPC server entry point (port 50051)
 ├── requirements.txt          # Python dependencies (pinned versions)
 ├── pytest.ini                # Pytest configuration
 ├── .env.example              # Environment variables template

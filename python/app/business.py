@@ -36,7 +36,11 @@ def update_product_logic(product_id: int, name: Optional[str] = None,
     Raises:
         ProductNotFoundError: If product doesn't exist
     """
-    product_data = ProductUpdate(name=name, description=description, price=price, stock=stock)
+    fields = {k: v for k, v in (
+        ("name", name), ("description", description),
+        ("price", price), ("stock", stock),
+    ) if v is not None}
+    product_data = ProductUpdate(**fields)
     return db.update(product_id, product_data)
 
 

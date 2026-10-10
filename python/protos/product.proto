@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package fastpoc;
+
+// ProductService exposes the same Product CRUD operations as the REST API and
+// MCP tools, backed by the shared business logic in app/business.py.
+service ProductService {
+  rpc ListProducts(Empty) returns (ProductList);
+  rpc GetProduct(ProductId) returns (Product);
+  rpc CreateProduct(CreateProductRequest) returns (Product);
+  rpc UpdateProduct(UpdateProductRequest) returns (Product);
+  rpc DeleteProduct(ProductId) returns (DeleteResponse);
+}
+
+// PricingService mirrors the A2A PricingAgent. StreamPricingAnalysis is a
+// server-streaming RPC that maps to the SSE streaming endpoint — it emits
+// progress events then a final result.
+service PricingService {
+  rpc GetPricing(ProductId) returns (PricingResult);
+  rpc StreamPricingAnalysis(ProductId) returns (stream PricingProgress);
+}
+
+message Empty {}
+
+message ProductId {
+  int32 id = 1;
+}
+
+message Product {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int32 stock = 5;
+}
+
+message ProductList {
+  repeated Product products = 1;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+  int32 stock = 4;
+}
+
+// Optional-update semantics: a field is only applied when its corresponding
+// has_* flag is true, so a client can update a subset of fields.
+message UpdateProductRequest {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int32 stock = 5;
+  bool has_name = 6;
+  bool has_description = 7;
+  bool has_price = 8;
+  bool has_stock = 9;
+}
+
+message DeleteResponse {
+  string message = 1;
+}
+
+message PricingResult {
+  double suggested_min = 1;
+  double suggested_max = 2;
+  bool discount_eligible = 3;
+  string reasoning = 4;
+}
+
+// One event in the StreamPricingAnalysis stream. `status` is
+// "working" | "completed" | "failed". `step` is set while working,
+// `result` when completed, `error` when failed.
+message PricingProgress {
+  string status = 1;
+  string step = 2;
+  PricingResult result = 3;
+  string error = 4;
+}

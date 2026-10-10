@@ -7,6 +7,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-10-10
+
+### Added
+- gRPC transport — a third interface alongside REST and MCP, backed by the same business logic:
+  - `protos/product.proto` — `ProductService` (CRUD) and `PricingService` (unary `GetPricing` + server-streaming `StreamPricingAnalysis`)
+  - `app/grpc_server.py` — servicers mapping `ProductNotFoundError` → `NOT_FOUND` and Pydantic `ValidationError` → `INVALID_ARGUMENT`
+  - `app/grpc_gen/` — committed generated stubs; `scripts/gen_grpc.py` regenerates them
+  - `grpc_entry.py` — standalone entry point (port 50051, `GRPC_PORT` to override)
+  - `examples/grpc_client.py` — demo client for unary calls and the server-streaming RPC
+  - `test_grpc.py` — 13 servicer tests covering CRUD, error codes, and streaming
+- `grpcio` and `grpcio-tools` added to `requirements.txt`
+
+### Fixed
+- `update_product_logic` in `business.py` always constructed `ProductUpdate` with all four fields, defeating `exclude_unset` in `db.update` — partial updates failed with a NOT NULL constraint error. Now only provided fields are passed, fixing partial updates across the gRPC and MCP paths.
+
 ## [1.10.0] - 2026-10-03
 
 ### Added
@@ -131,7 +146,8 @@ Production-ready hardening by Qwen AI on the initial CRUD skeleton.
 - `python/test_app.py` — initial test suite
 - `python/requirements.txt`, `python/README.md`
 
-[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/kalaiguna/fastpoc-mcp-api/compare/v1.7.0...v1.8.0

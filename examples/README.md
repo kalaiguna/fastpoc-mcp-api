@@ -4,6 +4,37 @@ Standalone scripts that demonstrate the FastPOC agent service from a caller's pe
 
 See [docs/llm-integration.md](../docs/llm-integration.md) for the full guide on connecting an LLM to this service.
 
+## grpc_client.py
+
+Demonstrates the gRPC transport — the same business logic as REST and MCP, over gRPC. Makes unary calls (`ListProducts`, `GetProduct`, `CreateProduct`) and consumes the server-streaming `StreamPricingAnalysis`, printing each progress event as it arrives.
+
+### Prerequisites
+
+```bash
+pip install grpcio
+```
+
+Start the gRPC server first:
+
+```bash
+cd python && python grpc_entry.py
+```
+
+### Run
+
+```bash
+python examples/grpc_client.py
+```
+
+### Environment variables
+
+| Variable      | Default            | Description                      |
+|---------------|--------------------|----------------------------------|
+| `GRPC_TARGET` | `localhost:50051`  | host:port of the gRPC server     |
+| `PRODUCT_ID`  | `1`                | Product ID to fetch / analyse    |
+
+---
+
 ## openapi_tool_codegen.py
 
 Reads the FastAPI OpenAPI spec and generates Gemini and OpenAI tool definitions automatically. Eliminates hand-maintaining tool schemas — re-run whenever the API changes.

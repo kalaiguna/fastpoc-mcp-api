@@ -2,15 +2,17 @@
 
 ## Overview
 
-This project exposes a single Product database through two interfaces: a REST API (FastAPI) and an MCP Server (Model Context Protocol). Both share the same business logic — no duplication. An Agent layer demonstrates the A2A (Agent-to-Agent) communication pattern on top of the REST API.
+This project exposes a single Product database through three transports: a REST API (FastAPI), an MCP Server (Model Context Protocol), and a gRPC server. All three share the same business logic — no duplication. An Agent layer demonstrates the A2A (Agent-to-Agent) communication pattern on top of the REST API.
 
 ```
 app/
-├── models.py           # Pydantic schemas (shared by API and MCP)
+├── models.py           # Pydantic schemas (shared by all transports)
 ├── db.py               # SQLite data access layer
 ├── business.py         # Domain logic (the single source of truth)
 ├── api.py              # REST endpoints — thin wrappers over business.py
 ├── mcp.py              # MCP tool definitions — thin wrappers over business.py
+├── grpc_server.py      # gRPC servicers — thin wrappers over business.py
+├── grpc_gen/           # Generated gRPC stubs (from protos/product.proto)
 ├── service.py          # Wires the MCP server instance (used by mcp_entry.py)
 ├── auth.py             # API key dependency
 ├── limiter.py          # Shared rate limiter instance
@@ -25,7 +27,11 @@ app/
 ## Key Design Decisions
 
 ### Shared business layer
-`business.py` holds all domain logic. `api.py` and `mcp.py` are intentionally thin — they handle transport concerns (HTTP status codes, MCP tool signatures) and delegate everything else. Adding a third interface (e.g. GraphQL) means writing another thin wrapper, not touching business logic.
+`business.py` holds all domain logic. `api.py`, `mcp.py`, and `grpc_server.py` are intentionally thin — they handle transport concerns (HTTP status codes, MCP tool signatures, gRPC status codes) and delegate everything else. Adding a fourth interface (e.g. GraphQL) means writing another thin wrapper, not touching business logic.
+
+### gRPC transport
+
+`protos/product.proto` defines the contract: `ProductService` (CRUD) and `PricingService` (unary `GetPricing` plus a server-streaming `StreamPricingAnalysis` that mirrors the SSE streaming endpoint). Stubs are generated into `app/grpc_gen/` via `scripts/gen_grpc.py` and committed so there is no build step to run the server. `grpc_server.py` maps domain exceptions to gRPC status codes (`ProductNotFoundError` → `NOT_FOUND`, Pydantic `ValidationError` → `INVALID_ARGUMENT`). Regenerate the stubs after editing the proto.
 
 ### Auth as a FastAPI dependency, not middleware
 Auth is applied per-endpoint via `dependencies=[Depends(require_api_key)]`. This makes it explicit which endpoints are protected, keeps health check endpoints public without special-casing, and makes the auth behaviour visible in Swagger. Middleware would silently apply to everything, which is harder to reason about and test.
@@ -60,12 +66,15 @@ The pricing logic lives in pure functions in `pricing.py`, keeping it testable w
 |---|---|
 | `main.py` | Starts the FastAPI server (REST API) |
 | `mcp_entry.py` | Starts the MCP server in stdio mode (for AI clients like Claude Desktop) |
+| `grpc_entry.py` | Starts the gRPC server on port 50051 (`GRPC_PORT` to override) |
 
 ## Extending the Project
 
 **Add a new endpoint:** add a function in `business.py`, then a route in `api.py`.
 
 **Add a new MCP tool:** add a function in `business.py`, then a `@mcp.tool()` in `mcp.py`.
+
+**Add a new gRPC method:** declare it in `protos/product.proto`, run `python scripts/gen_grpc.py` to regenerate stubs, then implement the servicer method in `grpc_server.py` over `business.py`.
 
 **Add a new agent:** add logic functions in `app/agents/`, register a route in `agents/router.py`. Point `PRICING_AGENT_URL` (or a new env var) to a separate host to run it as a true remote agent.
 
