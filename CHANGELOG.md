@@ -8,6 +8,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added
+- `docs/courseware/`: course documentation presenting fastpoc as a production-quality, multi-transport reference for the separate AI Engineering training program. Includes `INDEX.md`, `README.md`, `syllabus.md`, and `test-map.md` (course outline plus a mapping of the test suite to modules). Documentation only, no code changes.
 - GraphQL transport — a fourth interface alongside REST, MCP, and gRPC, backed by the same business logic:
   - `app/graphql_schema.py` — strawberry schema with `Query` (list/get) and `Mutation` (create/update/delete) over `business.py`; domain exceptions propagate as GraphQL errors
   - Mounted at `/graphql` in `app/api.py` via `GraphQLRouter`, serving the GraphiQL explorer UI; carries the same `require_api_key` dependency as the REST product routes
